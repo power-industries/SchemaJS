@@ -1,4 +1,4 @@
-module.exports = class {
+class Validator {
 	constructor() {}
 
 	validate(data) {
@@ -20,3 +20,5 @@ module.exports = class {
 		throw new Error('Method not defined');
 	}
 }
+
+module.exports = Validator;

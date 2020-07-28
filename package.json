@@ -1,6 +1,6 @@
 {
   "name": "@power-industries/schemajs",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Modern Schema Validation by Method Chaining",
   "main": "index.js",
   "scripts": {
@@ -19,5 +19,8 @@
   "devDependencies": {
     "@types/jest": "^26.0.4",
     "jest": "^26.1.0"
+  },
+  "dependencies": {
+    "@power-industries/typejs": "^1.0.0"
   }
 }
