@@ -56,7 +56,9 @@ The table below shows the possible outcomes of Parsing:
 | on Success | Promise resolves to `data` or default `value` | Returns `data` or default `value` |
 | on Failure | Promise rejects with Error                    | Throws Error                      |
 
-The `validate()` and `validateSync()` methods are very suitable for decision making (for example in an IF-Statement). In contrast, the `parse()` and `parseSync()` methods are more suitable for scrutinizing data, inserting a default value if something is missing and finding Errors.
+The `validate()` and `validateSync()` methods are very suitable for decision-making (for example in an IF-Statement). In contrast, the `parse()` and `parseSync()` methods are more suitable for scrutinizing data, inserting a default value if something is missing and finding Errors.
+
+There is also a method called `isSchema` available. It takes a parameter `schema`. It returns `true` if the parameter is a valid Schema, otherwise it returns `false`.
 
 ### Rules
 
