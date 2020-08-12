@@ -1,116 +1,87 @@
-const Validator = require('./Validator.base');
+const Validator = require('./Validator');
 const Type = require('@power-industries/typejs');
 
 class BooleanValidator extends Validator {
+	#rule = {
+		required: {
+			flag: false
+		},
+		default: {
+			flag: false,
+			value: null
+		},
+		equals: {
+			flag: false,
+			value: null
+		}
+	};
+
 	constructor() {
 		super();
-
-		this._rule = {
-			required: {
-				flag: false
-			},
-			equals: {
-				flag: false,
-				value: null
-			},
-			default: {
-				flag: false,
-				value: null
-			}
-		};
 	}
 
 	required() {
-		this._rule.required.flag = true;
+		this.#rule.required.flag = true;
 
 		return this;
-	};
-	equals(value) {
-		if(!(value instanceof Type.Boolean))
-			throw new TypeError('Expected value to be a Boolean');
-
-		this._rule.equals.value = value;
-		this._rule.equals.flag = true;
-
-		return this;
-	};
+	}
 	default(value) {
 		if(!(value instanceof Type.Boolean))
 			throw new TypeError('Expected value to be a Boolean');
 
-		this._rule.default.value = value;
-		this._rule.default.flag = true;
+		this.#rule.default.value = value;
+		this.#rule.default.flag = true;
 
 		return this;
-	};
+	}
+	equals(value) {
+		if(!(value instanceof Type.Boolean))
+			throw new TypeError('Expected value to be a Boolean');
+
+		this.#rule.equals.value = value;
+		this.#rule.equals.flag = true;
+
+		return this;
+	}
 
 	validate(data) {
 		return new Promise((resolve, reject) => {
-			if(data instanceof Type.Boolean) {
-				if(this._rule.equals.flag && data !== this._rule.equals.value)
-					return reject();
-
+			if(this.validateSync(data))
 				return resolve();
-			}
-			else {
-				if(this._rule.required.flag) {
-					if(this._rule.default.flag)
-						return resolve();
-					else
-						return reject();
-				}
-				else {
-					return resolve();
-				}
-			}
+			else
+				return reject();
 		});
-	};
+	}
 	validateSync(data) {
-		if(data instanceof Type.Boolean) {
-			return !(this._rule.equals.flag && data !== this._rule.equals.value);
+		try {
+			this.parseSync(data);
+			return true;
 		}
-		else {
-			if(this._rule.required.flag) {
-				return this._rule.default.flag;
-			}
-			else {
-				return true;
-			}
+		catch (e) {
+			return false;
 		}
-	};
-
+	}
 	parse(data) {
 		return new Promise((resolve, reject) => {
-			if(data instanceof Type.Boolean) {
-				if(this._rule.equals.flag && data !== this._rule.equals.value)
-					return reject(new Error('Expected data to equal ' + this._rule.equals.value));
-
-				return resolve(data);
+			try {
+				return resolve(this.parseSync(data));
 			}
-			else {
-				if(this._rule.required.flag) {
-					if(this._rule.default.flag)
-						return resolve(this._rule.default.value);
-					else
-						return reject(new Error('Expected data to be a Boolean'));
-				}
-				else {
-					return resolve(null);
-				}
+			catch (e) {
+				return reject(e);
 			}
 		});
-	};
+	}
 	parseSync(data) {
 		if(data instanceof Type.Boolean) {
-			if(this._rule.equals.flag && data !== this._rule.equals.value)
-				throw new Error('Expected data to equal ' + this._rule.equals.value);
+			if(this.#rule.equals.flag && data !== this.#rule.equals.value)
+				throw new Error('Expected data to equal ' + this.#rule.equals.value);
 
 			return data;
 		}
 		else {
-			if(this._rule.required.flag) {
-				if(this._rule.default.flag)
-					return this._rule.default.value;
+			if(this.#rule.required.flag) {
+				if(this.#rule.default.flag)
+					return this.#rule.default.value;
 				else
 					throw new Error('Expected data to be a Boolean');
 			}
@@ -118,7 +89,7 @@ class BooleanValidator extends Validator {
 				return null;
 			}
 		}
-	};
+	}
 }
 
 module.exports = BooleanValidator;

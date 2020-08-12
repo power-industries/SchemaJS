@@ -1,6 +1,6 @@
 {
   "name": "@power-industries/schemajs",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Modern Schema Validation by Method Chaining",
   "main": "index.js",
   "scripts": {
@@ -16,10 +16,7 @@
     "url": "https://github.com/power-industries/SchemaJS/issues"
   },
   "homepage": "https://github.com/power-industries/SchemaJS#readme",
-  "devDependencies": {
-    "@types/jest": "^26.0.4",
-    "jest": "^26.1.0"
-  },
+  "devDependencies": {},
   "dependencies": {
     "@power-industries/typejs": "^1.0.0"
   }
