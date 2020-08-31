@@ -1,87 +1,40 @@
-const Validator = require('./Validator');
 const Type = require('@power-industries/typejs');
+const Rule = require('../Util/Rule');
+const Any = require('./Any');
 
-class BooleanValidator extends Validator {
-	#rule = {
-		required: {
-			flag: false
-		},
-		default: {
-			flag: false,
-			value: null
-		},
-		equals: {
-			flag: false,
-			value: null
-		}
-	};
-
+class BooleanValidator extends Any {
 	constructor() {
 		super();
+		this._equals = new Rule();
 	}
 
-	required() {
-		this.#rule.required.flag = true;
-
-		return this;
-	}
 	default(value) {
 		if(!(value instanceof Type.Boolean))
 			throw new TypeError('Expected value to be a Boolean');
 
-		this.#rule.default.value = value;
-		this.#rule.default.flag = true;
-
-		return this;
+		return super.default(value);
 	}
 	equals(value) {
 		if(!(value instanceof Type.Boolean))
 			throw new TypeError('Expected value to be a Boolean');
 
-		this.#rule.equals.value = value;
-		this.#rule.equals.flag = true;
+		this._equals.value = value;
+		this._equals.flag = true;
 
 		return this;
 	}
 
-	validate(data) {
-		return new Promise((resolve, reject) => {
-			if(this.validateSync(data))
-				return resolve();
-			else
-				return reject();
-		});
-	}
-	validateSync(data) {
-		try {
-			this.parseSync(data);
-			return true;
-		}
-		catch (e) {
-			return false;
-		}
-	}
-	parse(data) {
-		return new Promise((resolve, reject) => {
-			try {
-				return resolve(this.parseSync(data));
-			}
-			catch (e) {
-				return reject(e);
-			}
-		});
-	}
 	parseSync(data) {
 		if(data instanceof Type.Boolean) {
-			if(this.#rule.equals.flag && data !== this.#rule.equals.value)
-				throw new Error('Expected data to equal ' + this.#rule.equals.value);
+			if(this._equals.flag && data !== this._equals.value)
+				throw new Error('Expected data to equal ' + this._equals.value);
 
 			return data;
 		}
 		else {
-			if(this.#rule.required.flag) {
-				if(this.#rule.default.flag)
-					return this.#rule.default.value;
+			if(this._required.flag) {
+				if(this._default.flag)
+					return this._default.value;
 				else
 					throw new Error('Expected data to be a Boolean');
 			}

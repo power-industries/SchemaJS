@@ -1,52 +1,25 @@
-const Validator = require('./Validator');
 const Type = require('@power-industries/typejs');
+const Rule = require('../Util/Rule');
+const Any = require('./Any');
 
-class NumberValidator extends Validator {
-	#rule = {
-		required: {
-			flag: false
-		},
-		default: {
-			flag: false,
-			value: null
-		},
-		integer: {
-			flag: false
-		},
-		min: {
-			flag: false,
-			value: null
-		},
-		max: {
-			flag: false,
-			value: null
-		},
-		equals: {
-			flag: false,
-			value: null
-		}
-	};
-
+class NumberValidator extends Any {
 	constructor() {
 		super();
+
+		this._integer = new Rule();
+		this._min = new Rule();
+		this._max = new Rule();
+		this._equals = new Rule();
 	}
 
-	required() {
-		this.#rule.required.flag = true;
-
-		return this;
-	}
 	default(value) {
 		if(!(value instanceof Type.Number))
 			throw new TypeError('Expected value to be a Number');
 
-		this.#rule.default.value = value;
-		this.#rule.default.flag = true;
-
-		return this;
+		return super.default(value);
 	}
 	integer() {
-		this.#rule.integer.flag = true;
+		this._integer.flag = true;
 
 		return this;
 	}
@@ -54,8 +27,8 @@ class NumberValidator extends Validator {
 		if(!(value instanceof Type.Number))
 			throw new TypeError('Expected value to be a Number');
 
-		this.#rule.min.value = value;
-		this.#rule.min.flag = true;
+		this._min.value = value;
+		this._min.flag = true;
 
 		return this;
 	}
@@ -63,8 +36,8 @@ class NumberValidator extends Validator {
 		if(!(value instanceof Type.Number))
 			throw new TypeError('Expected value to be a Number');
 
-		this.#rule.max.value = value;
-		this.#rule.max.flag = true;
+		this._max.value = value;
+		this._max.flag = true;
 
 		return this;
 	}
@@ -72,59 +45,32 @@ class NumberValidator extends Validator {
 		if(!(value instanceof Type.Number))
 			throw new TypeError('Expected value to be a Number');
 
-		this.#rule.equals.value = value;
-		this.#rule.equals.flag = true;
+		this._equals.value = value;
+		this._equals.flag = true;
 
 		return this;
 	}
 
-	validate(data) {
-		return new Promise((resolve, reject) => {
-			if(this.validateSync(data))
-				return resolve();
-			else
-				return reject();
-		});
-	}
-	validateSync(data) {
-		try {
-			this.parseSync(data);
-			return true;
-		}
-		catch (e) {
-			return false;
-		}
-	}
-	parse(data) {
-		return new Promise((resolve, reject) => {
-			try {
-				return resolve(this.parseSync(data));
-			}
-			catch (e) {
-				return reject(e);
-			}
-		});
-	}
 	parseSync(data) {
 		if(data instanceof Type.Number) {
-			if(this.#rule.integer.flag && !Number.isSafeInteger(data))
+			if(this._integer.flag && !Number.isSafeInteger(data))
 				throw new Error('Expected data to be an Integer');
 
-			if(this.#rule.min.flag && data < this.#rule.min.value)
-				throw new Error('Expected data to be at least ' + this.#rule.min.value);
+			if(this._min.flag && data < this._min.value)
+				throw new Error('Expected data to be at least ' + this._min.value);
 
-			if(this.#rule.max.flag && data > this.#rule.max.value)
-				throw new Error('Expected data to be at most ' + this.#rule.max.value);
+			if(this._max.flag && data > this._max.value)
+				throw new Error('Expected data to be at most ' + this._max.value);
 
-			if(this.#rule.equals.flag && data !== this.#rule.equals.value)
-				throw new Error('Expected data to equal ' + this.#rule.equals.value);
+			if(this._equals.flag && data !== this._equals.value)
+				throw new Error('Expected data to equal ' + this._equals.value);
 
 			return data;
 		}
 		else {
-			if(this.#rule.required.flag) {
-				if(this.#rule.default.flag)
-					return this.#rule.default.value;
+			if(this._required.flag) {
+				if(this._default.flag)
+					return this._default.value;
 				else
 					throw new Error('Expected data to be a Number');
 			}

@@ -3,15 +3,14 @@ const NumberValidator = require('./Validators/NumberValidator');
 const StringValidator = require('./Validators/StringValidator');
 const ArrayValidator = require('./Validators/ArrayValidator');
 const ObjectValidator = require('./Validators/ObjectValidator');
-const Validator = require('./Validators/Validator');
+const Any = require('./Validators/Any');
 
 module.exports = {
+	Any: () => {return new Any();},
 	Boolean: () => {return new BooleanValidator();},
 	Number: () => {return new NumberValidator();},
 	String: () => {return new StringValidator();},
 	Array: () => {return new ArrayValidator();},
 	Object: () => {return new ObjectValidator();},
-	isSchema: (schema) => {
-		return schema instanceof Validator;
-	}
+	Validators: {Any, BooleanValidator, NumberValidator, StringValidator, ArrayValidator, ObjectValidator}
 };
