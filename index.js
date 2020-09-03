@@ -12,5 +12,12 @@ module.exports = {
 	String: () => {return new StringValidator();},
 	Array: () => {return new ArrayValidator();},
 	Object: () => {return new ObjectValidator();},
-	Validators: {Any, BooleanValidator, NumberValidator, StringValidator, ArrayValidator, ObjectValidator}
+	Validator: {
+		Any: Any,
+		Boolean: BooleanValidator,
+		Number: NumberValidator,
+		String: StringValidator,
+		Array: ArrayValidator,
+		Object: ObjectValidator
+	}
 };
