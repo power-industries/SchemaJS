@@ -8,98 +8,123 @@ For an explanation on what Method Chaining is, please consider reading this arti
 
 ## Installation
 
-To install this Module as a dependency, run the following command:
+Use the package manager [NPM](https://www.npmjs.com/) to install SchemaJS into your NodeJS Project.
 
-```
+```bash
 npm install --save @power-industries/schemajs
 ```
 
-To use it in specific Modules, you can include it like this:
+You can then import the module into your JavaScript File.
 
 ```javascript
-const Schema = require('@power-industries/schemajs');
+const Type = require('@power-industries/schemajs');
 ```
-
-## Table of Content
-
-[Installation](#Installation)
-
-[Table of Content](#Table of Content)
-
-[Usage](#Usage)
-- [Rules](#Rules)
-    - [Boolean](#Boolean)
-    - [Number](#Number)
-    - [String](#String)
-    - [Array](#Object)
-    - [Object](#Object)
 
 ## Usage
 
-SchemaJS allows for Validating and Parsing of JSON data with Validators. SchemaJS currently supports Validators for Booleans, Numbers, Strings, Arrays and Objects.
+### Definition
 
-Validators can be modified in behaviour by Validator rules. These Rules are chainable without exception.
+#### Validator
 
-A Validator can both Validate and Parse JSON data, where each of those methods are available as a synchronous and an asynchronous method. All methods can either fail or succeed.
+A Validator is the most basic Building Block of SchemaJS. It is usually based on a specific Datatype. The purpose of a Validator is to combine all Rules and Validation/Parsing Methods into one Namespace.
 
-The table below shows the possible outcomes of *Validation*:
+There are currently 5 Type-Specific Validators (Boolean, Number, String, Array and Object) and 1 General Validator (Any) available. All Validators are derived from the Any Validator.
 
-|            | `validate(data)`                  | `validateSync(data)` |
-| ---------- | --------------------------------- | -------------------- |
-| on Success | Promise resolves with `undefined` | returns `true`       |
-| on Failure | Promise rejects with `undefined`  | returns `false`      |
+#### Rule
 
-The table below shows the possible outcomes of Parsing:
+Rules are specific Methods which are changing the behaviour of a Validator. Rules are chainable without exception, which makes them easy to use.
 
-|            | `parse(data)`                                 | `parseSync(data)`                 |
-| ---------- | :-------------------------------------------- | --------------------------------- |
-| on Success | Promise resolves to `data` or default `value` | Returns `data` or default `value` |
-| on Failure | Promise rejects with Error                    | Throws Error                      |
+#### Validation/Parsing
 
-The `validate()` and `validateSync()` methods are very suitable for decision-making (for example in an IF-Statement). In contrast, the `parse()` and `parseSync()` methods are more suitable for scrutinizing data, inserting a default value if something is missing and finding Errors.
+Validation/Parsing describes the process of Validating or Parsing data according to the previously defined Validators and Rules.
 
-There is also a method called `isSchema` available. It takes a parameter `schema`. It returns `true` if the parameter is a valid Schema, otherwise it returns `false`.
+### Creating a Validator
 
-### Rules
-
-Every Validator has multiple Rules who can change the behaviour of the Validator. Every Rule is chainable without exception. Specific Rules take a Parameter who is called `value` opposed to the Parameter `data` of the Validation and Parsing methods.
-
-The `required()` and `default()` Rules are unique because they are available on every Validator. A Validator usually accepts any `data` and changes the ones not equaling to its Datatype to `null`. To bypass this behaviour the `required()` *Rule* can be set. It changes the default behaviour so that the Validator only accepts its own Datatype.
+To create a Validator, SchemaJS provides you with the original Validator Constructors as well as Pseudo-Constructors.
 
 ```javascript
-// In this example there is a String given to a Validator with Boolean as its Datatype.
-Schema.Boolean()
-	.parseSync("Hello World");
+// Create a Number Validator with a Pseudo-Constructor (recommended)
+Schema.Number();
 
-// [Success] Returns null (data is not a Boolean)
+// Create a Number Validator with the original Constructor (not recommended)
+new Schema.Validator.Number();
 ```
 
-With the `required()` Rule the example above would fail.
+Please note that the `new` keyword is required if using the direct Constructor.
+
+The original Constructors can be used for Instance-checking:
 
 ```javascript
-Schema.Boolean()
-	.required()
-	.parseSync("Hello World");
+const N = Schema.Number();
+const O = Schema.Object();
 
-// [Failure] Throws Error: Expected data to be a Boolean
+// Check if N is a Number Validator
+N instanceof Schema.Validator.Number			// Returns true
+
+// Check if A is a Validator
+O instanceof Schema.Validator.Any					// Returns true
 ```
 
-To further modify this behaviour, the `default()` Rule can be used. If `required()` is set, this Rule can overwrite the Error and return a `value` that has to be of the `Validators` Datatype.
+The second example works because ALL Validators are derived from `Any`.
+
+### Applying Rules
+
+These Rules are grouped by their Validator Type. Please be aware that the Validator `Any` has special behaviour.
+
+All Rules can be chained, as they return their own Class Instance.
+
+For the sake of simplicity, and because `validate()`, `validateSync()` and `parse()` use the `parseSync()` method internally, all following examples will use the `parseSync()` method for illustration. (See Validation/Parsing)
+
+#### Any
+
+Any is a special Validator in that it not only accepts every Datatype, but also is the base Validators, from whom all other Validators are derived.
+
+Usually a Validator only accepts its own Datatype and defaults to `null` if data of another Type is given. `Any` is different in that it always returns the data, no matter what Datatype it has or what Rules are set.
+
+Please note that although no Rule has influence on the behaviour of `Any`, the `required` and `default` Rules are defined on this Validator.
 
 ```javascript
-Schema.Boolean()
-	.required()
-	.default(true)
-	.parseSync("Hello World");
+Schema.Any()
+    .parseSync([1, true, "Hello World"]);
 
-// [Success] Returns true (the default value)
+// [Success] Returns [1, true, "Hello World"] (the given data)
 ```
 
-The `default()` Rule has no effect without the `required()` Rule being set.
+##### required()
 
+This Rule requires the data to be of the Validators Datatype. If not, the Validation/Parsing Operation will fail.
 
+```javascript
+Schema.Number()
+    .parseSync("Hello World");
 
-For the sake of simplicity, the following examples use the `parseSync()` method to illustrate the behaviour.
+// [Success] Returns null (data is not a Number)
+
+Schema.Number()
+    .required()
+    .parseSync("Hello World");
+
+// [Failure] Throws Error: Expected data to be a Number
+```
+
+##### default()
+
+This Rule allows you to set a Default in case the data is required but not of the Validators Type. It only comes into play if `required()` is set.
+
+```javascript
+Schema.Number()
+    .default(1)
+    .parseSync("Hello World");
+
+// [Success] Returns null (data is not a Number)
+
+Schema.Number()
+    .required()
+    .default(1)
+    .parseSync("Hello World");
+
+// [Success] Returns 1 (the default value)
+```
 
 #### Boolean
 
@@ -163,16 +188,16 @@ This Rule modifies the behaviour of the Validator setting a minimum `value` of w
 
 ```javascript
 Schema.Number()
-	.min(18)
-	.parseSync(50);
+    .min(18)
+    .parseSync(50);
 
 // [Success] Returns 50 (the given data)
 ```
 
 ```javascript
 Schema.Number()
-	.min(18)
-	.parseSync(5);
+    .min(18)
+    .parseSync(5);
 
 // [Failure] Throws Error: Expected data to be at least 18
 ```
@@ -183,16 +208,16 @@ This Rule modifies the behaviour of the Validator setting a maximum `value` of w
 
 ```javascript
 Schema.Number()
-	.max(18)
-	.parseSync(5);
+    .max(18)
+    .parseSync(5);
 
 // [Success] Returns 5 (the given data)
 ```
 
 ```javascript
 Schema.Number()
-	.max(18)
-	.parseSync(50);	
+    .max(18)
+    .parseSync(50);	
 
 // [Failure] Throws Error: Expected data to be at most 18
 ```
@@ -203,16 +228,16 @@ This Rule modifies the behaviour of the Validator so that only Integers are allo
 
 ```javascript
 Schema.Number()
-	.integer()
-	.parseSync(20);	
+    .integer()
+    .parseSync(20);	
 
 // [Success] Returns 20 (the given data)
 ```
 
 ```javascript
 Schema.Number()
-	.integer()
-	.parseSync(20.5);
+    .integer()
+    .parseSync(20.5);
 
 // [Failure] Throws Error: Expected data to be an Integer
 ```
@@ -223,16 +248,16 @@ This Rule defines a `value` which `data` has to equal. It takes a parameter `val
 
 ```javascript
 Schema.Number()
-  .equals(20)
-  .parseSync(20);
+    .equals(20)
+    .parseSync(20);
 
 // [Success] Returns false (the given data)
 ```
 
 ```javascript
 Schema.Number()
-  .equals(20)
-  .parseSync(50);
+    .equals(20)
+    .parseSync(50);
 
 // [Failure] Throws Error: Expected data to equal 20
 ```
@@ -243,14 +268,14 @@ This Validator supports only Strings. If the Datatype of `data` is not a String,
 
 ```javascript
 Schema.String()
-  .parseSync("Hello World");
+    .parseSync("Hello World");
 
 // [Success] Returns "Hello World" (the given data)
 ```
 
 ```javascript
 Schema.String()
-  .parseSync(123);
+    .parseSync(123);
 
 // [Success] Returns null (data is not a String)
 ```
@@ -261,16 +286,16 @@ This Rule modifies the behaviour of the Validator setting a minimum `value` of w
 
 ```javascript
 Schema.String()
-	.min(5)
-	.parseSync("Hello World");
+    .min(5)
+    .parseSync("Hello World");
 
 // [Success] Returns "Hello World" (the given data)
 ```
 
 ```javascript
 Schema.String()
-	.min(20)
-	.parseSync("Hello World");
+    .min(20)
+    .parseSync("Hello World");
 
 // [Failure] Throws Error: Expected data.length to be at least 20
 ```
@@ -281,16 +306,16 @@ This Rule modifies the behaviour of the Validator setting a maximum `value` of w
 
 ```javascript
 Schema.String()
-	.max(20)
-	.parseSync("Hello World");
+    .max(20)
+    .parseSync("Hello World");
 
 // [Success] Returns "Hello World" (the given data)
 ```
 
 ```javascript
 Schema.String()
-	.max(5)
-	.parseSync("Hello World");
+    .max(5)
+    .parseSync("Hello World");
 
 // [Failure] Throws Error: Expected data.length to be at most 5
 ```
@@ -301,16 +326,16 @@ This Rule modifies the behaviour of the Validator so that only uppercase Strings
 
 ```javascript
 Schema.String()
-	.uppercase()
-	.parseSync("HELLO WORLD");
+    .uppercase()
+    .parseSync("HELLO WORLD");
 
 // [Success] Returns "HELLO WORLD" (the given data)
 ```
 
 ```javascript
 Schema.String()
-	.uppercase()
-	.parseSync("Hello World");
+    .uppercase()
+    .parseSync("Hello World");
 
 // [Failure] Throws Error: Expected data to be Uppercase
 ```
@@ -321,16 +346,16 @@ This Rule modifies the behaviour of the Validator so that only lowercase Strings
 
 ```javascript
 Schema.String()
-	.lowercase()
-	.parseSync("hello world");
+    .lowercase()
+    .parseSync("hello world");
 
 // [Success] Returns "hello world" (the given data)
 ```
 
 ```javascript
 Schema.String()
-	.lowercase()
-	.parseSync("Hello World");
+    .lowercase()
+    .parseSync("Hello World");
 
 // [Failure] Throws Error: Expected data to be Lowercase
 ```
@@ -341,16 +366,16 @@ This Rule modifies the behaviour of the Validator so that the given `value` of t
 
 ```javascript
 Schema.String()
-	.contains("Hello")
-	.parseSync("Hello World");
+    .contains("Hello")
+    .parseSync("Hello World");
 
 // [Success] Returns "Hello World" (the given data)
 ```
 
 ```javascript
 Schema.String()
-	.contains("Morning")
-	.parseSync("Hello World");
+    .contains("Morning")
+    .parseSync("Hello World");
 
 // [Failure] Throws Error: Expected data to contain Morning
 ```
@@ -361,16 +386,16 @@ This Rule defines a `value` which `data` has to equal. It takes a parameter `val
 
 ```javascript
 Schema.String()
-  .equals("Hello World")
-  .parseSync("Hello World");
+    .equals("Hello World")
+    .parseSync("Hello World");
 
 // [Success] Returns "Hello World" (the given data)
 ```
 
 ```javascript
 Schema.String()
-  .equals("Hello")
-  .parseSync("Hello World");
+    .equals("Hello")
+    .parseSync("Hello World");
 
 // [Failure] Throws Error: Expected data to equal "Hello"
 ```
@@ -381,16 +406,16 @@ This Rule defines a RegExp which `data` has to match against. It takes a paramet
 
 ```javascript
 Schema.String()
-	.matches(/^[a-zA-Z]+$/)
-	.parseSync("HelloWorld");
+    .matches(/^[a-zA-Z]+$/)
+    .parseSync("HelloWorld");
 
 // [Success] Returns "HelloWorld" (the given data)
 ```
 
 ```javascript
 Schema.String()
-	.matches(/^[a-zA-Z]+$/)
-	.parseSync("Hello World");
+    .matches(/^[a-zA-Z]+$/)
+    .parseSync("Hello World");
 
 // [Failure] Throws Error: Expected data to match /^[a-zA-Z]+$/
 ```
@@ -405,16 +430,16 @@ This Rule modifies the behaviour of the Validator setting a minimum `value` of e
 
 ```javascript
 Schema.Array()
-	.min(3)
-	.parseSync([1, 2, 3]);
+    .min(3)
+    .parseSync([1, 2, 3]);
 
 // [Success] Returns [1, 2, 3] (the given data)
 ```
 
 ```javascript
 Schema.Array()
-	.min(20)
-	.parseSync([1, 2, 3]);
+    .min(20)
+    .parseSync([1, 2, 3]);
 
 // [Failure] Throws Error: Expected data.length to be at least 20
 ```
@@ -425,16 +450,16 @@ This Rule modifies the behaviour of the Validator setting a maximum `value` of e
 
 ```javascript
 Schema.Array()
-	.max(20)
-	.parseSync([1, 2, 3]);
+    .max(20)
+    .parseSync([1, 2, 3]);
 
 // [Success] Returns [1, 2, 3] (the given data)
 ```
 
 ```javascript
 Schema.Array()
-	.max(3)
-	.parseSync([1, 2, 3, 4]);
+    .max(3)
+    .parseSync([1, 2, 3, 4]);
 
 // [Failure] Throws Error: Expected data.length to be at most 3
 ```
@@ -445,13 +470,13 @@ This Rule defines the allowed type of item an Array may contain. It takes a para
 
 ```javascript
 Schema.Array()
-	.item(Schema.Number()
+    .item(Schema.Number()
         .required()
         .integer()
         .min(0)
         .max(100)
-  )
-  .parseSync([1, 2, 3]);
+    )
+    .parseSync([1, 2, 3]);
 
 // [Success] Returns [1, 2, 3] (the given data)
 ```
@@ -463,8 +488,8 @@ Schema.Array()
         .integer()
         .min(0)
         .max(100)
-  )
-  .parseSync([true, 2, 3]);
+    )
+    .parseSync([true, 2, 3]);
 
 // [Failure] Expected data to be a Number
 ```
@@ -479,16 +504,16 @@ This Rule modifies the behaviour of the Validator setting a minimum `value` of e
 
 ```javascript
 Schema.Object()
-	.min(3)
-	.parseSync({a: 1, b: 2, c: 3});
+    .min(3)
+    .parseSync({a: 1, b: 2, c: 3});
 
 // [Success] Returns {a: 1, b: 2, c: 3} (the given data)
 ```
 
 ```javascript
 Schema.Object()
-	.min(20)
-	.parseSync({a: 1, b: 2, c: 3});
+    .min(20)
+    .parseSync({a: 1, b: 2, c: 3});
 
 // [Failure] Throws Error: Expected data.length to be at least 20
 ```
@@ -499,16 +524,16 @@ This Rule modifies the behaviour of the Validator setting a maximum `value` of e
 
 ```javascript
 Schema.Object()
-	.max(20)
-	.parseSync({a: 1, b: 2, c: 3});
+    .max(20)
+    .parseSync({a: 1, b: 2, c: 3});
 
 // [Success] Returns {a: 1, b: 2, c: 3} (the given data)
 ```
 
 ```javascript
 Schema.Object()
-	.max(3)
-	.parseSync({a: 1, b: 2, c: 3});
+    .max(3)
+    .parseSync({a: 1, b: 2, c: 3});
 
 // [Failure] Throws Error: Expected data.length to be at most 3
 ```
@@ -519,22 +544,22 @@ This Rule defines a Schema the Object has to follow. Any key/value pair not in t
 
 ```javascript
 Schema.Object()
-	.schema({
-  	name: Schema.String().required(),
-	    age: Schema.Number().required().integer().min(0)
-	})
-	.parseSync({name: "Max", age: 20, a: 1});
+    .schema({
+        name: Schema.String().required(),
+        age: Schema.Number().required().integer().min(0)
+    })
+    .parseSync({name: "Max", age: 20, a: 1});
 
 // [Success] Returns {name: "Max", age: 20} (the given data)
 ```
 
 ```javascript
 Schema.Object()
-	.schema({
-  	name: Schema.String().required(),
-		age: Schema.Number().required().integer().min(0)
-	})
-	.parseSync({name: "Max"});
+    .schema({
+        name: Schema.String().required(),
+        age: Schema.Number().required().integer().min(0)
+    })
+    .parseSync({name: "Max"});
 
 // [Failure] Throws Error: Expected data to be a Number
 ```
@@ -545,12 +570,12 @@ This Rule preserves unspecified keys from the `schema` Rule.
 
 ```javascript
 Schema.Object()
-	.schema({
-  	name: Schema.String().required(),
-		age: Schema.Number().required().integer().min(0)
-	})
-	.preserve()
-	.parseSync({name: "Max", age: 20, a: 1});
+    .schema({
+        name: Schema.String().required(),
+        age: Schema.Number().required().integer().min(0)
+    })
+    .preserve()
+    .parseSync({name: "Max", age: 20, a: 1});
 
 // [Success] Returns {name: "Max", age: 20, a: 1} (the given data)
 ```
@@ -563,8 +588,8 @@ This Rule checks if the Object is of a specific instance. It takes a parameter `
 class Test{}
 
 Schema.Object()
-	.instanceof(Test)
-	.parseSync(new Test());
+    .instanceof(Test)
+    .parseSync(new Test());
 
 // [Success] Returns {} (the given data)
 ```
@@ -573,8 +598,50 @@ Schema.Object()
 class Test{}
 
 Schema.Object()
-	.instanceof(Test)
-	.parseSync(new String());
+    .instanceof(Test)
+    .parseSync(new String());
 
 // [Failure] Throws Error: Expected data to be instanceof Test
 ```
+
+### Validation/Parsing
+
+There are 4 Methods available who can be split into 2 Groups: *Validation* and *Parsing*. 
+
+Each of those Groups features 2 Methods - one Synchronous and one Asynchronous. 
+
+Each method can have two outcomes again: Success or Failure.
+
+The table below shows the possible outcomes of *Validation*:
+
+| Validation | `validate(data)`                  | `validateSync(data)` |
+| ---------- | --------------------------------- | -------------------- |
+| on Success | Promise resolves with `undefined` | returns `true`       |
+| on Failure | Promise rejects with `undefined`  | returns `false`      |
+
+The table below shows the possible outcomes of *Parsing*:
+
+| Parsing    | `parse(data)`                                 | `parseSync(data)`                 |
+| ---------- | :-------------------------------------------- | --------------------------------- |
+| on Success | Promise resolves to `data` or default `value` | Returns `data` or default `value` |
+| on Failure | Promise rejects with Error                    | Throws Error                      |
+
+The `validate()` and `validateSync()` Methods are very suitable for decision-making (for example in an IF-Statement). In contrast, the `parse()` and `parseSync()` Methods are more suitable for scrutinizing data, inserting a default value if something is missing and finding Errors in data.
+
+Please note that both Validation Methods (`validate()` and `validateSync()`) as well as the `parse()` method internally use the `parseSync()` method. This makes it easier to implement new Validators if needed, as only a `parseSync()` method has to be defined.
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+MIT License
+
+Copyright (c) 2020 Power Industries Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

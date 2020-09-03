@@ -1,53 +1,28 @@
-const Validator = require('./Validator');
 const Type = require('@power-industries/typejs');
+const Rule = require('../Util/Rule');
+const Any = require('./Any');
 
-class ArrayValidator extends Validator {
-	#rule = {
-		required: {
-			flag: false
-		},
-		default: {
-			flag: false,
-			value: null
-		},
-		min: {
-			flag: false,
-			value: null
-		},
-		max: {
-			flag: false,
-			value: null
-		},
-		item: {
-			flag: false,
-			value: null
-		}
-	}
-
+class ArrayValidator extends Any {
 	constructor() {
 		super();
+
+		this._min = new Rule();
+		this._max = new Rule();
+		this._item = new Rule();
 	}
 
-	required() {
-		this.#rule.required.flag = true;
-
-		return this;
-	}
 	default(value) {
 		if (!(value instanceof Type.Array))
 			throw new TypeError('Expected value to be an Array');
 
-		this.#rule.default.value = value;
-		this.#rule.default.flag = true;
-
-		return this;
+		return super.default(value);
 	}
 	min(value) {
 		if (!(value instanceof Type.Number))
 			throw new TypeError('Expected value to be a Number');
 
-		this.#rule.min.value = value;
-		this.#rule.min.flag = true;
+		this._min.value = value;
+		this._min.flag = true;
 
 		return this;
 	}
@@ -55,59 +30,34 @@ class ArrayValidator extends Validator {
 		if (!(value instanceof Type.Number))
 			throw new TypeError('Expected value to be a Number');
 
-		this.#rule.max.value = value;
-		this.#rule.max.flag = true;
+		this._max.value = value;
+		this._max.flag = true;
 
 		return this;
 	}
 	item(value) {
-		if(!(value instanceof Validator))
+		if(!(value instanceof Any))
 			throw new TypeError('Expected value to be a Validator');
 
-		this.#rule.item.value = value;
-		this.#rule.item.flag = true;
+		this._item.value = value;
+		this._item.flag = true;
 
 		return this;
 	}
 
-	validate(data) {
-		return new Promise((resolve, reject) => {
-			if (this.validateSync(data))
-				return resolve();
-			else
-				return reject();
-		});
-	}
-	validateSync(data) {
-		try {
-			this.parseSync(data);
-			return true;
-		} catch (e) {
-			return false;
-		}
-	}
-	parse(data) {
-		return new Promise((resolve, reject) => {
-			try {
-				return resolve(this.parseSync(data));
-			} catch (e) {
-				return reject(e);
-			}
-		});
-	}
 	parseSync(data) {
 		if(data instanceof Type.Array) {
-			if(this.#rule.min.flag && data.length < this.#rule.min.value)
-				throw new Error('Expected data.length to be at least ' + this.#rule.min.value);
+			if(this._min.flag && data.length < this._min.value)
+				throw new Error('Expected data.length to be at least ' + this._min.value);
 
-			if(this.#rule.max.flag && data.length > this.#rule.max.value)
-				throw new Error('Expected data.length to be at most ' + this.#rule.max.value);
+			if(this._max.flag && data.length > this._max.value)
+				throw new Error('Expected data.length to be at most ' + this._max.value);
 
-			if(this.#rule.item.flag) {
+			if(this._item.flag) {
 				let result = [];
 
 				data.forEach(element => {
-					result.push(this.#rule.item.value.parseSync(element));
+					result.push(this._item.value.parseSync(element));
 				});
 
 				data = result;
@@ -116,9 +66,9 @@ class ArrayValidator extends Validator {
 			return data;
 		}
 		else {
-			if(this.#rule.required.flag) {
-				if(this.#rule.default.flag)
-					return this.#rule.default.value;
+			if(this._required.flag) {
+				if(this._default.flag)
+					return this._default.value;
 				else
 					throw new Error('Expected data to be an Array');
 			}

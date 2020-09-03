@@ -1,56 +1,26 @@
-const Validator = require('./Validator');
 const Type = require('@power-industries/typejs');
+const Rule = require('../Util/Rule');
+const Any = require('./Any');
 
-class ObjectValidator extends Validator {
-	#rule = {
-		required: {
-			flag: false
-		},
-		default: {
-			flag: false,
-			value: null
-		},
-		preserve: {
-			flag: false
-		},
-		min: {
-			flag: false,
-			value: null
-		},
-		max: {
-			flag: false,
-			value: null
-		},
-		schema: {
-			flag: false,
-			value: null
-		},
-		instanceof: {
-			flag: false,
-			value: null
-		}
-	}
-
+class ObjectValidator extends Any {
 	constructor() {
 		super();
+
+		this._preserve = new Rule();
+		this._min = new Rule();
+		this._max = new Rule();
+		this._schema = new Rule();
+		this._instanceof = new Rule();
 	}
 
-	required() {
-		this.#rule.required.flag = true;
-
-		return this;
-	}
 	default(value) {
 		if(!(value instanceof Type.Object))
 			throw new TypeError('Expected value to be an Object');
 
-		this.#rule.default.value = value;
-		this.#rule.default.flag = true;
-
-		return this;
+		return super.default(value);
 	}
 	preserve() {
-		this.#rule.preserve.flag = true;
+		this._preserve.flag = true;
 
 		return this;
 	}
@@ -58,8 +28,8 @@ class ObjectValidator extends Validator {
 		if(!(value instanceof Type.Number))
 			throw new TypeError('Expected value to be a Number');
 
-		this.#rule.min.value = value;
-		this.#rule.min.flag = true;
+		this._min.value = value;
+		this._min.flag = true;
 
 		return this;
 	}
@@ -67,8 +37,8 @@ class ObjectValidator extends Validator {
 		if(!(value instanceof Type.Number))
 			throw new TypeError('Expected value to be a Number');
 
-		this.#rule.max.value = value;
-		this.#rule.max.flag = true;
+		this._max.value = value;
+		this._max.flag = true;
 
 		return this;
 	}
@@ -77,12 +47,12 @@ class ObjectValidator extends Validator {
 			throw new TypeError('Expected value to be an Object of Validators');
 
 		Object.keys(value).forEach(key => {
-			if(!(value[key] instanceof Validator))
+			if(!(value[key] instanceof Any))
 				throw new TypeError('Expected value to be an Object of Validator');
 		});
 
-		this.#rule.schema.value = value;
-		this.#rule.schema.flag = true;
+		this._schema.value = value;
+		this._schema.flag = true;
 
 		return this;
 	}
@@ -90,70 +60,40 @@ class ObjectValidator extends Validator {
 		if(!(value instanceof Type.Function))
 			throw new TypeError('Expected value to be a Constructor');
 
-		this.#rule.instanceof.value = value;
-		this.#rule.instanceof.flag = true;
+		this._instanceof.value = value;
+		this._instanceof.flag = true;
 
 		return this;
 	}
 
-	validate(data) {
-		return new Promise((resolve, reject) => {
-			if (this.validateSync(data))
-				return resolve();
-			else
-				return reject();
-		});
-	}
-	validateSync(data) {
-		try {
-			this.parseSync(data);
-			return true;
-		} catch (e) {
-			return false;
-		}
-	}
-	parse(data) {
-		return new Promise((resolve, reject) => {
-			try {
-				return resolve(this.parseSync(data));
-			} catch (e) {
-				return reject(e);
-			}
-		});
-	}
 	parseSync(data) {
 		if(data instanceof Type.Object) {
-			if(this.#rule.min.flag && Object.keys(data).length < this.#rule.min.value)
-				throw new TypeError('Expected data.length to be at least ' + this.#rule.min.value);
+			if(this._min.flag && Object.keys(data).length < this._min.value)
+				throw new TypeError('Expected data.length to be at least ' + this._min.value);
 
-			if(this.#rule.max.flag && Object.keys(data).length > this.#rule.max.value)
-				throw new TypeError('Expected data.length to be at most ' + this.#rule.max.value);
+			if(this._max.flag && Object.keys(data).length > this._max.value)
+				throw new TypeError('Expected data.length to be at most ' + this._max.value);
 
-			if(this.#rule.instanceof.flag && !(data instanceof this.#rule.instanceof.value))
-				throw new TypeError('Expected data to be instanceof ' + this.#rule.instanceof.value.name);
+			if(this._instanceof.flag && !(data instanceof this._instanceof.value))
+				throw new TypeError('Expected data to be instanceof ' + this._instanceof.value.name);
 
-			if(this.#rule.schema.flag) {
-				Object.keys(this.#rule.schema.value).forEach(key => {
-					try {
-						data[key] = this.#rule.schema.value[key].parseSync(data[key]);
-					}
-					catch(error) {
-						throw error;
-					}
+			if(this._schema.flag) {
+				Object.keys(this._schema.value).forEach(key => {
+					data[key] = this._schema.value[key].parseSync(data[key]);
 				});
 			}
 
-			if(!this.#rule.preserve.flag && this.#rule.schema.flag)
+			if(!this._preserve.flag && this._schema.flag)
 				Object.keys(data)
-					.filter(key => !Object.keys(this.#rule.schema.value).includes(key))
+					.filter(key => !Object.keys(this._schema.value).includes(key))
 					.forEach(key => delete data[key]);
 
 			return data;
 		}
 		else {
-			if(this.#rule.required.flag) {
-				if(this.#rule.default.flag)
-					return this.#rule.default.value;
+			if(this._required.flag) {
+				if(this._default.flag)
+					return this._default.value;
 				else
 					throw new Error('Expected data to be an Object');
 			}
