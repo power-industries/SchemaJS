@@ -28,7 +28,7 @@ const Type = require('@power-industries/schemajs');
 
 A Validator is the most basic Building Block of SchemaJS. It is usually based on a specific Datatype. The purpose of a Validator is to combine all Rules and Validation/Parsing Methods into one Namespace.
 
-There are currently 5 Type-Specific Validators (Boolean, Number, String, Array and Object) and 1 General Validator (Any) available. All Validators are derived from the Any Validator.
+There are currently 5 Type-Specific Validators (Boolean, Number, String, Array and Object) and 1 General Validator (AnyValidator) available. All Validators are derived from the AnyValidator Validator.
 
 #### Rule
 
@@ -62,29 +62,29 @@ const O = Schema.Object();
 N instanceof Schema.Validator.Number			// Returns true
 
 // Check if A is a Validator
-O instanceof Schema.Validator.Any   			// Returns true
+O instanceof Schema.Validator.AnyValidator   			// Returns true
 ```
 
-The second example works because ALL Validators are derived from `Any`.
+The second example works because ALL Validators are derived from `AnyValidator`.
 
 ### Applying Rules
 
-These Rules are grouped by their Validator Type. Please be aware that the Validator `Any` has special behaviour.
+These Rules are grouped by their Validator Type. Please be aware that the Validator `AnyValidator` has special behaviour.
 
 All Rules can be chained, as they return their own Class Instance.
 
 For the sake of simplicity, and because `validate()`, `validateSync()` and `parse()` use the `parseSync()` method internally, all following examples will use the `parseSync()` method for illustration. (See Validation/Parsing)
 
-#### Any
+#### AnyValidator
 
-Any is a special Validator in that it not only accepts every Datatype, but also is the base Validators, from whom all other Validators are derived.
+AnyValidator is a special Validator in that it not only accepts every Datatype, but also is the base Validators, from whom all other Validators are derived.
 
-Usually a Validator only accepts its own Datatype and defaults to `null` if data of another Type is given. `Any` is different in that it always returns the data, no matter what Datatype it has or what Rules are set.
+Usually a Validator only accepts its own Datatype and defaults to `null` if data of another Type is given. `AnyValidator` is different in that it always returns the data, no matter what Datatype it has or what Rules are set.
 
-Please note that although no Rule has influence on the behaviour of `Any`, the `required` and `default` Rules are defined on this Validator.
+Please note that although no Rule has influence on the behaviour of `AnyValidator`, the `required` and `default` Rules are defined on this Validator.
 
 ```javascript
-Schema.Any()
+Schema.AnyValidator()
     .parseSync([1, true, "Hello World"]);
 
 // [Success] Returns [1, true, "Hello World"] (the given data)
@@ -540,7 +540,7 @@ Schema.Object()
 
 ##### schema
 
-This Rule defines a Schema the Object has to follow. Any key/value pair not in this schema gets removed unless the `preserve()` Rule is set. This Rule takes a parameter `value` which has to be an Object of Validators.
+This Rule defines a Schema the Object has to follow. AnyValidator key/value pair not in this schema gets removed unless the `preserve()` Rule is set. This Rule takes a parameter `value` which has to be an Object of Validators.
 
 ```javascript
 Schema.Object()
