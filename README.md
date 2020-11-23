@@ -62,7 +62,7 @@ const O = Schema.Object();
 N instanceof Schema.Validator.Number			// Returns true
 
 // Check if A is a Validator
-O instanceof Schema.Validator.Any					// Returns true
+O instanceof Schema.Validator.Any   			// Returns true
 ```
 
 The second example works because ALL Validators are derived from `Any`.
