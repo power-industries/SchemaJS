@@ -7,5 +7,5 @@ module.exports = function getSchemaType(schema) {
 	if(!(schema['type'] instanceof Type.String))
 		throw new TypeError('Expected schema.type to be a String');
 
-	return schema['type'];
+	return schema['type'].toLowerCase();
 }

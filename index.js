@@ -1,4 +1,5 @@
 const Type = require('@power-industries/typejs');
+const getSchemaType = require('./Util/getSchemaType');
 
 // The Base Validator
 const Validator = require('./Util/Validator');
@@ -10,6 +11,11 @@ const NumberValidator = require('./Validators/TypeValidators/NumberValidator');
 const StringValidator = require('./Validators/TypeValidators/StringValidator');
 const ArrayValidator = require('./Validators/TypeValidators/ArrayValidator');
 const ObjectValidator = require('./Validators/TypeValidators/ObjectValidator');
+
+// Default LogicalValidators - can be overridden by custom Validators
+const NotValidator = require('./Validators/LogicalValidators/NotValidator');
+const OrValidator = require('./Validators/LogicalValidators/OrValidator');
+const AndValidator = require('./Validators/LogicalValidators/AndValidator');
 
 class Schema {
 	/**
@@ -26,7 +32,7 @@ class Schema {
 			throw new TypeError('Expected customValidatorMap to be a Map');
 
 		customValidatorMap.forEach((value, key) => {
-			if(!(key instanceof Type.String && value instanceof Validator))
+			if(!(key instanceof Type.String && value.prototype instanceof Validator))
 				throw new TypeError('Expected customValidatorMap to be a Map of Strings and Validators');
 		});
 
@@ -37,6 +43,9 @@ class Schema {
 			['string', StringValidator],
 			['array', ArrayValidator],
 			['object', ObjectValidator],
+			['not', NotValidator],
+			['or', OrValidator],
+			['and', AndValidator],
 			...customValidatorMap
 		]);
 
@@ -49,7 +58,7 @@ class Schema {
 	}
 
 	fromJSON(schema) {
-		let schemaType = Schema.getSchemaType(schema);
+		let schemaType = getSchemaType(schema);
 
 		if(!this._validatorMap.has(schemaType))
 			throw new TypeError('Validator ' + schemaType + ' not found');
@@ -111,6 +120,16 @@ class Schema {
 		return new ObjectValidator();
 	}
 
+	static Not(validator) {
+		return new NotValidator(validator);
+	}
+	static Or(validator) {
+		return new OrValidator(validator);
+	}
+	static And(validator) {
+		return new AndValidator(validator);
+	}
+
 	static get AnyValidator() {
 		return AnyValidator;
 	}
@@ -128,6 +147,16 @@ class Schema {
 	}
 	static get ObjectValidator() {
 		return ObjectValidator;
+	}
+
+	static get NotValidator() {
+		return NotValidator;
+	}
+	static get OrValidator() {
+		return OrValidator;
+	}
+	static get AndValidator() {
+		return AndValidator;
 	}
 }
 

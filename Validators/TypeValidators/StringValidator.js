@@ -1,6 +1,7 @@
 const Validator = require('../../Util/Validator');
 const Rule = require('../../Util/Rule');
 const Type = require('@power-industries/typejs');
+const getSchemaType = require('../../Util/getSchemaType');
 
 const SchemaError = require('../../Util/SchemaError');
 const ParseError = require('../../Util/ParseError');
@@ -134,19 +135,10 @@ class StringValidator extends Validator {
 	static fromJSON(schema) {
 		let result = new StringValidator();
 
-		if(!(schema instanceof Type.Object))
-			throw new SchemaError('Expected schema to be an Object');
+		if (getSchemaType(schema) !== 'string')
+			throw new SchemaError('Expected schema.type to be "string"');
 
 		let schemaMap = new Map(Object.entries(schema));
-
-		if (!schemaMap.has('type'))
-			throw new SchemaError('Expected schema.type to be a String');
-
-		if (!(schemaMap.get('type') instanceof Type.String))
-			throw new SchemaError('Expected schema.type to be a String');
-
-		if (schemaMap.get('type') !== 'string')
-			throw new SchemaError('Expected schema.type to be "string"');
 
 		if(schemaMap.has('required'))
 			result.required(schemaMap.get('required'));
@@ -169,8 +161,12 @@ class StringValidator extends Validator {
 		if(schemaMap.has('contains'))
 			result.contains(schemaMap.get('contains'));
 
-		if(schemaMap.has('matches'))
+		if(schemaMap.has('matches')) {
+			if(!(schemaMap.get('matches') instanceof Type.String))
+				throw new SchemaError('Expected schema.matches to be a String');
+
 			result.matches(new RegExp((/\/(.*)\/(.*)/.exec(schemaMap.get('matches')))[1], (/\/(.*)\/(.*)/.exec(schemaMap.get('matches')))[2]));
+		}
 
 		if(schemaMap.has('equals'))
 			result.equals(schemaMap.get('equals'));
@@ -179,7 +175,10 @@ class StringValidator extends Validator {
 	}
 
 	parseSync(data) {
-		if(data instanceof Type.String) {
+		try {
+			if(!(data instanceof Type.String))
+				throw new ParseError('Expected data to be a String');
+
 			if(this._uppercase.flag && data.toUpperCase() !== data)
 				throw new ParseError('Expected data to be an Uppercase String');
 
@@ -203,12 +202,12 @@ class StringValidator extends Validator {
 
 			return data;
 		}
-		else {
+		catch (error) {
 			if(this._required.flag) {
 				if(this._default.flag)
 					return this._default.value;
 				else
-					throw new ParseError('Expected data to be a String');
+					throw error;
 			}
 			else {
 				return null;

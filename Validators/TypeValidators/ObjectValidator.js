@@ -109,19 +109,10 @@ class ObjectValidator extends Validator {
 	static fromJSON(schema, validatorMap) {
 		let result = new ObjectValidator();
 
-		if(!(schema instanceof Type.Object))
-			throw new SchemaError('Expected schema to be an Object');
+		if (getSchemaType(schema) !== 'object')
+			throw new SchemaError('Expected schema.type to be "object"');
 
 		let schemaMap = new Map(Object.entries(schema));
-
-		if (!schemaMap.has('type'))
-			throw new SchemaError('Expected schema.type to be a String');
-
-		if (!(schemaMap.get('type') instanceof Type.String))
-			throw new SchemaError('Expected schema.type to be a String');
-
-		if (schemaMap.get('type') !== 'object')
-			throw new SchemaError('Expected schema.type to be "object"');
 
 		if(schemaMap.has('required'))
 			result.required(schemaMap.get('required'));
@@ -160,7 +151,10 @@ class ObjectValidator extends Validator {
 	}
 
 	parseSync(data) {
-		if(data instanceof Type.Object) {
+		try {
+			if(!(data instanceof Type.Object))
+				throw new ParseError('Expected data to be an Object');
+
 			if(this._min.flag && Object.keys(data).length < this._min.value)
 				throw new ParseError('Expected data.length to be at least ' + this._min.value);
 
@@ -180,12 +174,12 @@ class ObjectValidator extends Validator {
 
 			return data;
 		}
-		else {
+		catch (error) {
 			if(this._required.flag) {
 				if(this._default.flag)
 					return this._default.value;
 				else
-					throw new ParseError('Expected data to be an Object');
+					throw error;
 			}
 			else {
 				return null;

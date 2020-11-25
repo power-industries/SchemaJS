@@ -6,13 +6,16 @@ const getSchemaType = require('../../Util/getSchemaType');
 const SchemaError = require('../../Util/SchemaError');
 const ParseError = require('../../Util/ParseError');
 
-const isJSONType = require('../../Util/isJSONType');
-
-class AnyValidator extends Validator {
-	constructor() {
+class NotValidator extends Validator {
+	constructor(schema) {
 		super();
 		this._required = new Rule();
 		this._default = new Rule();
+
+		if(!(schema instanceof Validator))
+			throw new SchemaError('Expected schema to be a Validator');
+
+		this._schema = new Rule(true, schema);
 	}
 
 	required(value = true) {
@@ -38,7 +41,7 @@ class AnyValidator extends Validator {
 	}
 
 	toJSON() {
-		let result = {type: 'any'};
+		let result = {type: 'not'};
 
 		if(this._required.flag)
 			result['require'] = true;
@@ -46,15 +49,22 @@ class AnyValidator extends Validator {
 		if(this._default.flag)
 			result['default'] = this._default.value;
 
+		if(this._schema.flag)
+			result['schema'] = this._schema.value.toJSON();
+
 		return result;
 	}
-	static fromJSON(schema) {
-		let result = new AnyValidator();
-
-		if(getSchemaType(schema) !== 'any')
-			throw new SchemaError('Expected schema.type to be "any"');
+	static fromJSON(schema, validatorMap) {
+		if (getSchemaType(schema) !== 'not')
+			throw new SchemaError('Expected schema.type to be "not"');
 
 		let schemaMap = new Map(Object.entries(schema));
+		let schemaType = getSchemaType(schemaMap.get('schema'));
+
+		if (!validatorMap.has(schemaType))
+			throw new SchemaError('Validator ' + schemaType + ' not found');
+
+		let result = new NotValidator(validatorMap.get(schemaType).fromJSON(schemaMap.get('schema'), validatorMap));
 
 		if(schemaMap.has('required'))
 			result.required(schemaMap.get('required'));
@@ -67,23 +77,22 @@ class AnyValidator extends Validator {
 
 	parseSync(data) {
 		try {
-			if(!isJSONType(data))
-				throw new ParseError('Expected data to be a JSON-compatible Type');
-
+			this._schema.value.parseSync(data);
+		}
+		catch(error) {
 			return data;
 		}
-		catch (error) {
-			if(this._required.flag) {
-				if(this._default.flag)
-					return this._default.value;
-				else
-					throw error;
-			}
-			else {
-				return null;
-			}
+
+		if(this._required.flag) {
+			if(this._default.flag)
+				return this._default.value;
+			else
+				throw new ParseError('Expected data to be not be parsable');
+		}
+		else {
+			return null;
 		}
 	}
 }
 
-module.exports = AnyValidator;
+module.exports = NotValidator;

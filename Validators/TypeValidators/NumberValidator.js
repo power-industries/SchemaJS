@@ -1,6 +1,7 @@
 const Validator = require('../../Util/Validator');
 const Rule = require('../../Util/Rule');
 const Type = require('@power-industries/typejs');
+const getSchemaType = require('../../Util/getSchemaType');
 
 const SchemaError = require('../../Util/SchemaError');
 const ParseError = require('../../Util/ParseError');
@@ -96,19 +97,10 @@ class NumberValidator extends Validator {
 	static fromJSON(schema) {
 		let result = new NumberValidator();
 
-		if(!(schema instanceof Type.Object))
-			throw new SchemaError('Expected schema to be an Object');
+		if (getSchemaType(schema) !== 'number')
+			throw new SchemaError('Expected schema.type to be "number"');
 
 		let schemaMap = new Map(Object.entries(schema));
-
-		if (!schemaMap.has('type'))
-			throw new SchemaError('Expected schema.type to be a String');
-
-		if (!(schemaMap.get('type') instanceof Type.String))
-			throw new SchemaError('Expected schema.type to be a String');
-
-		if (schemaMap.get('type') !== 'number')
-			throw new SchemaError('Expected schema.type to be "number"');
 
 		if(schemaMap.has('required'))
 			result.required(schemaMap.get('required'));
@@ -132,7 +124,10 @@ class NumberValidator extends Validator {
 	}
 
 	parseSync(data) {
-		if(data instanceof Type.Number) {
+		try {
+			if(!(data instanceof Type.Number))
+				throw new ParseError('Expected data to be a Number');
+
 			if(this._integer.flag && !Number.isSafeInteger(data))
 				throw new ParseError('Expected data to be an Integer');
 
@@ -147,12 +142,12 @@ class NumberValidator extends Validator {
 
 			return data;
 		}
-		else {
+		catch (error) {
 			if(this._required.flag) {
 				if(this._default.flag)
 					return this._default.value;
 				else
-					throw new ParseError('Expected data to be a Number');
+					throw error;
 			}
 			else {
 				return null;

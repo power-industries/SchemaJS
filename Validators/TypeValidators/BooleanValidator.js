@@ -1,6 +1,7 @@
 const Validator = require('../../Util/Validator');
 const Rule = require('../../Util/Rule');
 const Type = require('@power-industries/typejs');
+const getSchemaType = require('../../Util/getSchemaType');
 
 const SchemaError = require('../../Util/SchemaError');
 const ParseError = require('../../Util/ParseError');
@@ -57,19 +58,10 @@ class BooleanValidator extends Validator {
 	static fromJSON(schema) {
 		let result = new BooleanValidator();
 
-		if(!(schema instanceof Type.Object))
-			throw new SchemaError('Expected schema to be an Object');
+		if (getSchemaType(schema) !== 'boolean')
+			throw new SchemaError('Expected schema.type to be "boolean"');
 
 		let schemaMap = new Map(Object.entries(schema));
-
-		if (!schemaMap.has('type'))
-			throw new SchemaError('Expected schema.type to be a String');
-
-		if (!(schemaMap.get('type') instanceof Type.String))
-			throw new SchemaError('Expected schema.type to be a String');
-
-		if (schemaMap.get('type') !== 'boolean')
-			throw new SchemaError('Expected schema.type to be "boolean"');
 
 		if(schemaMap.has('required'))
 			result.required(schemaMap.get('required'));
@@ -84,18 +76,21 @@ class BooleanValidator extends Validator {
 	}
 
 	parseSync(data) {
-		if(data instanceof Type.Boolean) {
+		try {
+			if(!(data instanceof Type.Boolean))
+				throw new ParseError('Expected data to be a Boolean');
+
 			if(this._equals.flag && data !== this._equals.value)
 				throw new ParseError('Expected data to equal ' + this._equals.value);
 
 			return data;
 		}
-		else {
+		catch(error) {
 			if(this._required.flag) {
 				if(this._default.flag)
 					return this._default.value;
 				else
-					throw new ParseError('Expected data to be a Boolean');
+					throw error;
 			}
 			else {
 				return null;
