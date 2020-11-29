@@ -53,7 +53,7 @@ class OrValidator extends Validator {
 	}
 
 	toJSON() {
-		let result = {type: 'not'};
+		let result = {type: 'or'};
 
 		if(this._required.flag)
 			result['require'] = true;

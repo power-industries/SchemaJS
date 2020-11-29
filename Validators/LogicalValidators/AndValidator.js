@@ -53,7 +53,7 @@ class AndValidator extends Validator {
 	}
 
 	toJSON() {
-		let result = {type: 'not'};
+		let result = {type: 'and'};
 
 		if(this._required.flag)
 			result['require'] = true;
