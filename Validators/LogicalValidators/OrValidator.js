@@ -7,20 +7,20 @@ const SchemaError = require('../../Util/SchemaError');
 const ParseError = require('../../Util/ParseError');
 
 class OrValidator extends Validator {
-	constructor(schema) {
+	constructor(validatorArray) {
 		super();
 		this._required = new Rule();
 		this._default = new Rule();
 
-		if(!(schema instanceof Type.Array))
+		if(!(validatorArray instanceof Type.Array))
 			throw new SchemaError('Expected schema to be an Array');
 
-		schema.forEach(validator => {
+		validatorArray.forEach(validator => {
 			if(!(validator instanceof Validator))
 				throw new SchemaError('Expected schema to be an Array of Validators');
 		})
 
-		this._schema = new Rule(true, schema);
+		this._schema = new Rule(true, validatorArray);
 	}
 
 	required(value = true) {
