@@ -1,10 +1,8 @@
 const Type = require('@power-industries/typejs');
 const getSchemaType = require('./Util/getSchemaType');
 
-// The Base Validator
 const Validator = require('./Util/Validator');
 
-// Default TypeValidators - can be overridden by custom Validators
 const AnyValidator = require('./Validators/TypeValidators/AnyValidator');
 const BooleanValidator = require('./Validators/TypeValidators/BooleanValidator');
 const NumberValidator = require('./Validators/TypeValidators/NumberValidator');
@@ -12,20 +10,10 @@ const StringValidator = require('./Validators/TypeValidators/StringValidator');
 const ArrayValidator = require('./Validators/TypeValidators/ArrayValidator');
 const ObjectValidator = require('./Validators/TypeValidators/ObjectValidator');
 
-// Default LogicalValidators - can be overridden by custom Validators
 const OrValidator = require('./Validators/LogicalValidators/OrValidator');
 const AndValidator = require('./Validators/LogicalValidators/AndValidator');
 
 class Schema {
-	/**
-	 * Create a new Schema instance
-	 * @param schema {Object | Validator} - A Schema, has to be a JSON-Schema or a Validator
-	 * @param customValidatorMap {Map<String, Validator>} - A Map of Strings and Validators
-	 * @throws {TypeError} - Throws TypeError if customValidatorMap is not a Map
-	 * @throws {TypeError} - Throws TypeError if keys of customValidatorMap are not Strings
-	 * @throws {TypeError} - Throws TypeError if values of customValidatorMap are not derived of Validator
-	 * @throws {TypeError} - Throws TypeError if schema is not an Object or Validator
-	 */
 	constructor(schema, customValidatorMap = new Map()) {
 		if(!(customValidatorMap instanceof Map))
 			throw new TypeError('Expected customValidatorMap to be a Map');
