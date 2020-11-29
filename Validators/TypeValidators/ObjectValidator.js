@@ -175,14 +175,23 @@ class ObjectValidator extends Validator {
 			return data;
 		}
 		catch (error) {
-			if(this._required.flag) {
-				if(this._default.flag)
-					return this._default.value;
+			if(data instanceof Type.Null) {
+				if(this._required.flag) {
+					if (this._default.flag)
+						return this._default.value;
+					else
+						throw ParseError('Expected data not to be Null');
+				}
 				else
-					throw error;
+					return data;
 			}
 			else {
-				return null;
+				if(this._default.flag) {
+					return this._default.value;
+				}
+				else {
+					throw error;
+				}
 			}
 		}
 	}

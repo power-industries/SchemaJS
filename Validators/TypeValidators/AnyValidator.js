@@ -67,8 +67,7 @@ class AnyValidator extends Validator {
 
 	parseSync(data) {
 		try {
-			if (!(data instanceof Type.Null ||
-				data instanceof Type.Boolean ||
+			if (!(data instanceof Type.Boolean ||
 				data instanceof Type.Number ||
 				data instanceof Type.String ||
 				data instanceof Type.Array ||
@@ -77,13 +76,23 @@ class AnyValidator extends Validator {
 
 			return data;
 		} catch (error) {
-			if (this._required.flag) {
-				if (this._default.flag)
-					return this._default.value;
+			if(data instanceof Type.Null) {
+				if(this._required.flag) {
+					if (this._default.flag)
+						return this._default.value;
+					else
+						throw ParseError('Expected data not to be Null');
+				}
 				else
+					return data;
+			}
+			else {
+				if(this._default.flag) {
+					return this._default.value;
+				}
+				else {
 					throw error;
-			} else {
-				return null;
+				}
 			}
 		}
 	}

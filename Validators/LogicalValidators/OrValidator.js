@@ -105,14 +105,23 @@ class OrValidator extends Validator {
 			catch (ignore) {}
 		}
 
-		if(this._required.flag) {
-			if(this._default.flag)
-				return this._default.value;
+		if(data instanceof Type.Null) {
+			if(this._required.flag) {
+				if (this._default.flag)
+					return this._default.value;
+				else
+					throw ParseError('Expected data not to be Null');
+			}
 			else
-				throw new ParseError('Expected data to be parsable by one Validator');
+				return data;
 		}
 		else {
-			return null;
+			if(this._default.flag) {
+				return this._default.value;
+			}
+			else {
+				throw new ParseError('Expected data to be parsable by at least one Validator');
+			}
 		}
 	}
 }
