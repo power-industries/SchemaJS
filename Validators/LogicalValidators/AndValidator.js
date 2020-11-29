@@ -44,6 +44,20 @@ class AndValidator extends Validator {
 
 		return this;
 	}
+	validators(value) {
+		if(!(value instanceof Type.Array))
+			throw new SchemaError('Expected value to be an Array');
+
+		value.forEach(validator => {
+			if(!(validator instanceof Validator))
+				throw new SchemaError('Expected schema to be an Array of Validators');
+		});
+
+		this._schema.flag = true;
+		this._schema.value = value;
+
+		return this;
+	}
 
 	toJSON() {
 		let result = {type: 'not'};
