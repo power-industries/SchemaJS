@@ -1,14 +1,15 @@
 const Type = require('@power-industries/typejs');
 
 /**
- * Rule Class - used for setting up Boolean Rules with an optional Value
+ * Rule Classes are used to define a single Rule.
+ * A single Rule can be enabled or disabled based on flag and can have an optional value.
  */
 class Rule {
 	/**
-	 * Creates a new Rule instance
+	 * Creates a new Rule
 	 * @constructor
-	 * @param [flag] {Boolean} - If the Rule is active or not (optional)
-	 * @param [value] {*} - An Optional value for the Rule (optional)
+	 * @param [flag=false] {Boolean} - If the Rule is active or not (optional, defaults to false)
+	 * @param [value=null] {*} - An Optional value for the Rule (optional, defaults to null)
 	 * @throws {TypeError} - Throws a TypeError if flag is not a Boolean
 	 */
 	constructor(flag = false, value = null) {
@@ -21,7 +22,7 @@ class Rule {
 
 	/**
 	 * Setter for flag
-	 * @param value {Boolean} - The flag indicating if the Rule is active or not
+	 * @param value {Boolean} - A Boolean enabling or disabling the Rule
 	 * @throws {TypeError} - Throws a TypeError if flag is not a Boolean
 	 */
 	set flag(value) {
@@ -41,7 +42,7 @@ class Rule {
 
 	/**
 	 * Getter for flag
-	 * @returns {Boolean} - Indicates if the Rule is active or not
+	 * @returns {Boolean} - Indicates if the Rule is enabled or disabled
 	 */
 	get flag() {
 		return this._flag;
