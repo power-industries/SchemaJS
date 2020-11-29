@@ -11,7 +11,7 @@ class AndValidator extends Validator {
 		super();
 		this._required = new Rule();
 		this._default = new Rule();
-		this._schema = new Rule();
+		this._validatorArray = new Rule();
 
 		this.validators(validatorArray);
 	}
@@ -46,8 +46,8 @@ class AndValidator extends Validator {
 				throw new SchemaError('Expected schema to be an Array of Validators');
 		});
 
-		this._schema.flag = true;
-		this._schema.value = value;
+		this._validatorArray.flag = true;
+		this._validatorArray.value = value;
 
 		return this;
 	}
@@ -61,8 +61,8 @@ class AndValidator extends Validator {
 		if(this._default.flag)
 			result['default'] = this._default.value;
 
-		if(this._schema.flag)
-			result['validators'] = this._schema.value.map(validator => validator.toJSON());
+		if(this._validatorArray.flag)
+			result['validators'] = this._validatorArray.value.map(validator => validator.toJSON());
 
 		return result;
 	}
@@ -99,7 +99,7 @@ class AndValidator extends Validator {
 
 	parseSync(data) {
 		try {
-			this._schema.value.forEach(validator => {
+			this._validatorArray.value.forEach(validator => {
 				validator.parseSync(data);
 			});
 			return data;
