@@ -6,8 +6,6 @@ const getSchemaType = require('../../Util/getSchemaType');
 const SchemaError = require('../../Util/SchemaError');
 const ParseError = require('../../Util/ParseError');
 
-const isJSONType = require('../../Util/isJSONType');
-
 class AnyValidator extends Validator {
 	constructor() {
 		super();
@@ -16,15 +14,16 @@ class AnyValidator extends Validator {
 	}
 
 	required(value = true) {
-		if(!(value instanceof Type.Boolean))
+		if (!(value instanceof Type.Boolean))
 			throw new SchemaError('Expected value to be a Boolean');
 
 		this._required.flag = value;
 
 		return this;
 	}
+
 	default(value) {
-		if(!(value instanceof Type.Null ||
+		if (!(value instanceof Type.Null ||
 			value instanceof Type.Boolean ||
 			value instanceof Type.Number ||
 			value instanceof Type.String ||
@@ -40,26 +39,27 @@ class AnyValidator extends Validator {
 	toJSON() {
 		let result = {type: 'any'};
 
-		if(this._required.flag)
+		if (this._required.flag)
 			result['require'] = true;
 
-		if(this._default.flag)
+		if (this._default.flag)
 			result['default'] = this._default.value;
 
 		return result;
 	}
+
 	static fromJSON(schema) {
 		let result = new AnyValidator();
 
-		if(getSchemaType(schema) !== 'any')
+		if (getSchemaType(schema) !== 'any')
 			throw new SchemaError('Expected schema.type to be "any"');
 
 		let schemaMap = new Map(Object.entries(schema));
 
-		if(schemaMap.has('required'))
+		if (schemaMap.has('required'))
 			result.required(schemaMap.get('required'));
 
-		if(schemaMap.has('default'))
+		if (schemaMap.has('default'))
 			result.default(schemaMap.get('default'));
 
 		return result;
@@ -67,19 +67,22 @@ class AnyValidator extends Validator {
 
 	parseSync(data) {
 		try {
-			if(!isJSONType(data))
+			if (!(data instanceof Type.Null ||
+				data instanceof Type.Boolean ||
+				data instanceof Type.Number ||
+				data instanceof Type.String ||
+				data instanceof Type.Array ||
+				data instanceof Type.Object))
 				throw new ParseError('Expected data to be a JSON-compatible Type');
 
 			return data;
-		}
-		catch (error) {
-			if(this._required.flag) {
-				if(this._default.flag)
+		} catch (error) {
+			if (this._required.flag) {
+				if (this._default.flag)
 					return this._default.value;
 				else
 					throw error;
-			}
-			else {
+			} else {
 				return null;
 			}
 		}
