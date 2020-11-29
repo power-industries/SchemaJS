@@ -62,10 +62,7 @@ class OrValidator extends Validator {
 			result['default'] = this._default.value;
 
 		if(this._schema.flag)
-			result['schema'] = this._schema.value.reduce((accumulator, element) => {
-				accumulator.push(element.toJSON());
-				return accumulator;
-			}, []);
+			result['schema'] = this._schema.value.map(validator => validator.toJSON());
 
 		return result;
 	}
