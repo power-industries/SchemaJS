@@ -99,10 +99,15 @@ class AndValidator extends Validator {
 
 	parseSync(data) {
 		try {
-			this._validatorArray.value.forEach(validator => {
-				validator.parseSync(data);
-			});
-			return data;
+			let result = this._validatorArray.value.reduce((accumulator, validator) => {
+				accumulator &= validator.validateSync(data);
+				return accumulator;
+			}, true)
+
+			if(result)
+				return data;
+			else
+				throw new ParseError('Expected data to be parsable by every Validator');
 		}
 		catch(error) {
 			if(data instanceof Type.Null) {
@@ -120,7 +125,7 @@ class AndValidator extends Validator {
 					return this._default.value;
 				}
 				else {
-					throw new ParseError('Expected data to be parsable by every Validator');
+					throw error;
 				}
 			}
 		}

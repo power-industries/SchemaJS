@@ -98,29 +98,35 @@ class OrValidator extends Validator {
 	}
 
 	parseSync(data) {
-		for(let i = 0; i < this._validatorArray.value.length; i++) {
-			try {
-				return this._validatorArray.value[i].parseSync(data);
-			}
-			catch (ignore) {}
-		}
+		try {
+			let result = this._validatorArray.value.reduce((accumulator, validator) => {
+				accumulator |= validator.validateSync(data);
+				return accumulator;
+			}, false)
 
-		if(data instanceof Type.Null) {
-			if(this._required.flag) {
-				if (this._default.flag)
-					return this._default.value;
-				else
-					throw ParseError('Expected data not to be Null');
-			}
-			else
+			if(result)
 				return data;
+			else
+				throw new ParseError('Expected data to be parsable by at least one Validator');
 		}
-		else {
-			if(this._default.flag) {
-				return this._default.value;
+		catch(error) {
+			if(data instanceof Type.Null) {
+				if(this._required.flag) {
+					if (this._default.flag)
+						return this._default.value;
+					else
+						throw ParseError('Expected data not to be Null');
+				}
+				else
+					return data;
 			}
 			else {
-				throw new ParseError('Expected data to be parsable by at least one Validator');
+				if(this._default.flag) {
+					return this._default.value;
+				}
+				else {
+					throw error;
+				}
 			}
 		}
 	}
