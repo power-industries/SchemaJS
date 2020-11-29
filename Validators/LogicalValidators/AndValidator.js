@@ -67,29 +67,26 @@ class AndValidator extends Validator {
 		return result;
 	}
 	static fromJSON(schema, validatorMap) {
-		// Check if schema is an Object and schema.type is equal to 'and'
+		let result = new AndValidator();
+
 		if (getSchemaType(schema) !== 'and')
 			throw new SchemaError('Expected schema.type to be "and"');
 
-		// Create a Map of the schema Object
 		let schemaMap = new Map(Object.entries(schema));
 
-		// Check if schemaMap has a schema Property that is an Array
-		if (!(schemaMap.has('schema') && schemaMap.get('schema') instanceof Type.Array))
-			throw new SchemaError('Expected schema.schema to be an Array');
+		if(schemaMap.has('schema')) {
+			if(!(schemaMap.get('schema') instanceof Type.Array))
+				throw new SchemaError('Expected schema.schema to be an Array');
 
-		// Create a new AndValidator with the result of a new Array created by looping though given Schemas
-		let result = new AndValidator(schemaMap.get('schema').map(schema => {
-			// Get the Type of the current schema
-			let schemaType = getSchemaType(schema);
+			result.validators(schemaMap.get('schema').map(schema => {
+				let schemaType = getSchemaType(schema);
 
-			// Check if a Validator for this schema exists
-			if (!validatorMap.has(schemaType))
-				throw new SchemaError('Validator ' + schemaType + ' not found');
+				if (!validatorMap.has(schemaType))
+					throw new SchemaError('Validator ' + schemaType + ' not found');
 
-			// Return the new Schema
-			return validatorMap.get(schemaType).fromJSON(schema, validatorMap);
-		}));
+				return validatorMap.get(schemaType).fromJSON(schema, validatorMap);
+			}));
+		}
 
 		if(schemaMap.has('required'))
 			result.required(schemaMap.get('required'));
