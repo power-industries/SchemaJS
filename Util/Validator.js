@@ -1,25 +1,28 @@
 /**
  * The Validator base class - should not be instantiated
  * @class
- * @abstract
  */
 class Validator {
 	/**
 	 * A method converting the active Rules in the Validator into a JSON-compatible Object
 	 * Should return an Object
 	 * Has to be overridden by derived Validators
+	 * @abstract
+	 * @throws {ReferenceError} - Throws a TypeError if called without being overridden
 	 */
 	toJSON() {
-		throw new TypeError('Method toJSON not defined');
+		throw new ReferenceError('Method toJSON not defined');
 	}
 
 	/**
 	 * A static method converting a JSON-compatible Object into an instance of the current Validator
 	 * Should return a derived instance of Validator
 	 * Has to be overridden by derived Validators
+	 * @abstract
+	 * @throws {ReferenceError} - Throws a TypeError if called without being overridden
 	 */
 	static fromJSON() {
-		throw new TypeError('Static Method fromJSON not defined');
+		throw new ReferenceError('Static Method fromJSON not defined');
 	}
 
 	/**
@@ -76,9 +79,8 @@ class Validator {
 	/**
 	 * A method for parsing data synchronously
 	 * Has to be overridden by derived Validators
-	 * @param data {*} - The data to parse
-	 * @returns {*} - The parsed data on success
-	 * @throws {ParseError} - Throws a ParseError on failure
+	 * @abstract
+	 * @throws {ReferenceError} - Throws a TypeError if called without being overridden
 	 */
 	parseSync(data) {
 		throw new ReferenceError('Method parseSync not defined');
