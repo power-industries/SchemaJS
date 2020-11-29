@@ -62,7 +62,7 @@ class OrValidator extends Validator {
 			result['default'] = this._default.value;
 
 		if(this._schema.flag)
-			result['schema'] = this._schema.value.map(validator => validator.toJSON());
+			result['validators'] = this._schema.value.map(validator => validator.toJSON());
 
 		return result;
 	}
@@ -74,11 +74,11 @@ class OrValidator extends Validator {
 
 		let schemaMap = new Map(Object.entries(schema));
 
-		if(schemaMap.has('schema')) {
-			if(!(schemaMap.get('schema') instanceof Type.Array))
-				throw new SchemaError('Expected schema.schema to be an Array');
+		if(schemaMap.has('validators')) {
+			if(!(schemaMap.get('validators') instanceof Type.Array))
+				throw new SchemaError('Expected schema.validators to be an Array');
 
-			result.validators(schemaMap.get('schema').map(schema => {
+			result.validators(schemaMap.get('validators').map(schema => {
 				let schemaType = getSchemaType(schema);
 
 				if (!validatorMap.has(schemaType))
