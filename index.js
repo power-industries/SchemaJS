@@ -13,7 +13,6 @@ const ArrayValidator = require('./Validators/TypeValidators/ArrayValidator');
 const ObjectValidator = require('./Validators/TypeValidators/ObjectValidator');
 
 // Default LogicalValidators - can be overridden by custom Validators
-const NotValidator = require('./Validators/LogicalValidators/NotValidator');
 const OrValidator = require('./Validators/LogicalValidators/OrValidator');
 const AndValidator = require('./Validators/LogicalValidators/AndValidator');
 
@@ -43,7 +42,6 @@ class Schema {
 			['string', StringValidator],
 			['array', ArrayValidator],
 			['object', ObjectValidator],
-			['not', NotValidator],
 			['or', OrValidator],
 			['and', AndValidator],
 			...customValidatorMap
@@ -120,9 +118,6 @@ class Schema {
 		return new ObjectValidator();
 	}
 
-	static Not(validator) {
-		return new NotValidator(validator);
-	}
 	static Or(validator) {
 		return new OrValidator(validator);
 	}
@@ -149,9 +144,6 @@ class Schema {
 		return ObjectValidator;
 	}
 
-	static get NotValidator() {
-		return NotValidator;
-	}
 	static get OrValidator() {
 		return OrValidator;
 	}
