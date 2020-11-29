@@ -11,16 +11,9 @@ class OrValidator extends Validator {
 		super();
 		this._required = new Rule();
 		this._default = new Rule();
+		this._schema = new Rule();
 
-		if(!(validatorArray instanceof Type.Array))
-			throw new SchemaError('Expected schema to be an Array');
-
-		validatorArray.forEach(validator => {
-			if(!(validator instanceof Validator))
-				throw new SchemaError('Expected schema to be an Array of Validators');
-		})
-
-		this._schema = new Rule(true, validatorArray);
+		this.validators(validatorArray);
 	}
 
 	required(value = true) {
