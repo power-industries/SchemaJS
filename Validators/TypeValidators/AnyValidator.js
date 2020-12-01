@@ -72,7 +72,7 @@ class AnyValidator extends Validator {
 			return this;
 		}
 		else if (this._validatorMap.has(schemaType))
-			return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+			return (new (this._validatorMap.get(schemaType))(this._validatorMap)).fromJSON(schema);
 		else
 			throw new TypeError('Validator ' + schemaType + ' not found');
 	}

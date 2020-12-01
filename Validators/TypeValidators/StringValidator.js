@@ -175,7 +175,7 @@ class StringValidator extends Validator {
 
 				let result = new RegExp(/\/(.*)\/(.*)/).exec(schemaMap.get('matches'));
 
-				this.matches(result[1], result[2]);
+				this.matches(new RegExp(result[1], result[2]));
 			}
 
 			if(schemaMap.has('equals'))
@@ -184,7 +184,7 @@ class StringValidator extends Validator {
 			return this;
 		}
 		else if (this._validatorMap.has(schemaType))
-			return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+			return (new (this._validatorMap.get(schemaType))(this._validatorMap)).fromJSON(schema);
 		else
 			throw new TypeError('Validator ' + schemaType + ' not found');
 	}

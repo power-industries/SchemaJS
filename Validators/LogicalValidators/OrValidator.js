@@ -97,14 +97,14 @@ class OrValidator extends Validator {
 					if (!this._validatorMap.has(schemaType))
 						throw new SchemaError('Validator ' + schemaType + ' not found');
 
-					return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(validator);
+					return (new (this._validatorMap.get(schemaType))(this._validatorMap)).fromJSON(validator);
 				}));
 			}
 
 			return this;
 		}
 		else if (this._validatorMap.has(schemaType))
-			return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+			return (new (this._validatorMap.get(schemaType))(this._validatorMap)).fromJSON(schema);
 		else
 			throw new TypeError('Validator ' + schemaType + ' not found');
 	}

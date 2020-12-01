@@ -147,7 +147,7 @@ class ObjectValidator extends Validator {
 					let schemaType = getSchemaType(schemaMap.get('schema')[key]);
 
 					if(this._validatorMap.has(schemaType))
-						result[key] = (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schemaMap.get('schema')[key]);
+						result[key] = (new (this._validatorMap.get(schemaType))(this._validatorMap)).fromJSON(schemaMap.get('schema')[key]);
 					else
 						throw new SchemaError('Validator ' + schemaType + ' not found');
 				});
@@ -158,7 +158,7 @@ class ObjectValidator extends Validator {
 			return this;
 		}
 		else if (this._validatorMap.has(schemaType))
-			return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+			return (new (this._validatorMap.get(schemaType))(this._validatorMap)).fromJSON(schema);
 		else
 			throw new TypeError('Validator ' + schemaType + ' not found');
 	}

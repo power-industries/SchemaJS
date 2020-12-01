@@ -47,7 +47,7 @@ class Schema {
 		if(!this._validatorMap.has(schemaType))
 			throw new TypeError('Validator ' + schemaType + ' not found');
 
-		return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+		return (new (this._validatorMap.get(schemaType))(this._validatorMap)).fromJSON(schema);
 	}
 	toJSON(schema) {
 		return schema.toJSON();
