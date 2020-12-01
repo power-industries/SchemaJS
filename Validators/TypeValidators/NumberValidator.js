@@ -1,14 +1,24 @@
-const Validator = require('../../Util/Validator');
-const Rule = require('../../Util/Rule');
+// Global Libraries
 const Type = require('@power-industries/typejs');
-const getSchemaType = require('../../Util/getSchemaType');
 
-const SchemaError = require('../../Util/SchemaError');
-const ParseError = require('../../Util/ParseError');
+// Util Libraries
+const getSchemaType = require('../../Util/getSchemaType');
+const checkValidatorMap = require('../../Util/checkValidatorMap');
+const Rule = require('../../Util/Rule');
+
+// Error Libraries
+const SchemaError = require('../../Util/Errors/SchemaError');
+const ParseError = require('../../Util/Errors/ParseError');
+
+// Validator Base Class
+const Validator = require('../Validator.base');
 
 class NumberValidator extends Validator {
-	constructor() {
+	constructor(validatorMap) {
 		super();
+
+		checkValidatorMap(validatorMap);
+		this._validatorMap = validatorMap;
 
 		this._required = new Rule();
 		this._default = new Rule();
@@ -94,33 +104,36 @@ class NumberValidator extends Validator {
 
 		return result;
 	}
-	static fromJSON(schema) {
-		let result = new NumberValidator();
+	fromJSON(schema) {
+		let schemaType = getSchemaType(schema);
 
-		if (getSchemaType(schema) !== 'number')
-			throw new SchemaError('Expected schema.type to be "number"');
+		if(schemaType === 'number') {
+			let schemaMap = new Map(Object.entries(schema));
 
-		let schemaMap = new Map(Object.entries(schema));
+			if(schemaMap.has('required'))
+				this.required(schemaMap.get('required'));
 
-		if(schemaMap.has('required'))
-			result.required(schemaMap.get('required'));
+			if(schemaMap.has('default'))
+				this.default(schemaMap.get('default'));
 
-		if(schemaMap.has('default'))
-			result.default(schemaMap.get('default'));
+			if(schemaMap.has('integer'))
+				this.integer(schemaMap.get('integer'));
 
-		if(schemaMap.has('integer'))
-			result.integer(schemaMap.get('integer'));
+			if(schemaMap.has('min'))
+				this.min(schemaMap.get('min'));
 
-		if(schemaMap.has('min'))
-			result.min(schemaMap.get('min'));
+			if(schemaMap.has('max'))
+				this.max(schemaMap.get('max'));
 
-		if(schemaMap.has('max'))
-			result.max(schemaMap.get('max'));
+			if(schemaMap.has('equals'))
+				this.equals(schemaMap.get('equals'));
 
-		if(schemaMap.has('equals'))
-			result.equals(schemaMap.get('equals'));
-
-		return result;
+			return this;
+		}
+		else if (this._validatorMap.has(schemaType))
+			return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+		else
+			throw new TypeError('Validator ' + schemaType + ' not found');
 	}
 
 	parseSync(data) {

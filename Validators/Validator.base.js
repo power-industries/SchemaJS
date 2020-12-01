@@ -21,8 +21,8 @@ class Validator {
 	 * @abstract
 	 * @throws {ReferenceError} - Throws a TypeError if called without being overridden
 	 */
-	static fromJSON() {
-		throw new ReferenceError('Static Method fromJSON not defined');
+	fromJSON() {
+		throw new ReferenceError('Method fromJSON not defined');
 	}
 
 	/**

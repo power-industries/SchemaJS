@@ -1,19 +1,28 @@
-const Validator = require('../../Util/Validator');
-const Rule = require('../../Util/Rule');
+// Global Libraries
 const Type = require('@power-industries/typejs');
-const getSchemaType = require('../../Util/getSchemaType');
 
-const SchemaError = require('../../Util/SchemaError');
-const ParseError = require('../../Util/ParseError');
+// Util Libraries
+const getSchemaType = require('../../Util/getSchemaType');
+const checkValidatorMap = require('../../Util/checkValidatorMap');
+const Rule = require('../../Util/Rule');
+
+// Error Libraries
+const SchemaError = require('../../Util/Errors/SchemaError');
+const ParseError = require('../../Util/Errors/ParseError');
+
+// Validator Base Class
+const Validator = require('../Validator.base');
 
 class AndValidator extends Validator {
-	constructor(validatorArray) {
+	constructor(validatorMap) {
 		super();
+
+		checkValidatorMap(validatorMap);
+		this._validatorMap = validatorMap;
+
 		this._required = new Rule();
 		this._default = new Rule();
-		this._validatorArray = new Rule();
-
-		this.validators(validatorArray);
+		this._validatorArray = new Rule(true, []);
 	}
 
 	required(value = true) {
@@ -66,35 +75,38 @@ class AndValidator extends Validator {
 
 		return result;
 	}
-	static fromJSON(schema, validatorMap) {
-		let result = new AndValidator();
+	fromJSON(schema) {
+		let schemaType = getSchemaType(schema);
 
-		if (getSchemaType(schema) !== 'and')
-			throw new SchemaError('Expected schema.type to be "and"');
+		if(schemaType === 'and') {
+			let schemaMap = new Map(Object.entries(schema));
 
-		let schemaMap = new Map(Object.entries(schema));
+			if(schemaMap.has('required'))
+				this.required(schemaMap.get('required'));
 
-		if(schemaMap.has('validators')) {
-			if(!(schemaMap.get('validators') instanceof Type.Array))
-				throw new SchemaError('Expected schema.validators to be an Array');
+			if(schemaMap.has('default'))
+				this.default(schemaMap.get('default'));
 
-			result.validators(schemaMap.get('validators').map(schema => {
-				let schemaType = getSchemaType(schema);
+			if(schemaMap.has('validators')) {
+				if(!(schemaMap.get('validators') instanceof Type.Array))
+					throw new SchemaError('Expected schema.validators to be an Array');
 
-				if (!validatorMap.has(schemaType))
-					throw new SchemaError('Validator ' + schemaType + ' not found');
+				this.validators(schemaMap.get('validators').map(validator => {
+					let schemaType = getSchemaType(validator);
 
-				return validatorMap.get(schemaType).fromJSON(schema, validatorMap);
-			}));
+					if (!this._validatorMap.has(schemaType))
+						throw new SchemaError('Validator ' + schemaType + ' not found');
+
+					return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(validator);
+				}));
+			}
+
+			return this;
 		}
-
-		if(schemaMap.has('required'))
-			result.required(schemaMap.get('required'));
-
-		if(schemaMap.has('default'))
-			result.default(schemaMap.get('default'));
-
-		return result;
+		else if (this._validatorMap.has(schemaType))
+			return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+		else
+			throw new TypeError('Validator ' + schemaType + ' not found');
 	}
 
 	parseSync(data) {

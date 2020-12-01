@@ -1,14 +1,24 @@
-const Validator = require('../../Util/Validator');
-const Rule = require('../../Util/Rule');
+// Global Libraries
 const Type = require('@power-industries/typejs');
-const getSchemaType = require('../../Util/getSchemaType');
 
-const SchemaError = require('../../Util/SchemaError');
-const ParseError = require('../../Util/ParseError');
+// Util Libraries
+const getSchemaType = require('../../Util/getSchemaType');
+const checkValidatorMap = require('../../Util/checkValidatorMap');
+const Rule = require('../../Util/Rule');
+
+// Error Libraries
+const SchemaError = require('../../Util/Errors/SchemaError');
+const ParseError = require('../../Util/Errors/ParseError');
+
+// Validator Base Class
+const Validator = require('../Validator.base');
 
 class ObjectValidator extends Validator {
-	constructor() {
+	constructor(validatorMap) {
 		super();
+
+		checkValidatorMap(validatorMap);
+		this._validatorMap = validatorMap;
 
 		this._required = new Rule();
 		this._default = new Rule();
@@ -106,48 +116,51 @@ class ObjectValidator extends Validator {
 
 		return result;
 	}
-	static fromJSON(schema, validatorMap) {
-		let result = new ObjectValidator();
+	fromJSON(schema) {
+		let schemaType = getSchemaType(schema);
 
-		if (getSchemaType(schema) !== 'object')
-			throw new SchemaError('Expected schema.type to be "object"');
+		if(schemaType === 'object') {
+			let schemaMap = new Map(Object.entries(schema));
 
-		let schemaMap = new Map(Object.entries(schema));
+			if(schemaMap.has('required'))
+				this.required(schemaMap.get('required'));
 
-		if(schemaMap.has('required'))
-			result.required(schemaMap.get('required'));
+			if(schemaMap.has('default'))
+				this.default(schemaMap.get('default'));
 
-		if(schemaMap.has('default'))
-			result.default(schemaMap.get('default'));
+			if(schemaMap.has('preserve'))
+				this.preserve(schemaMap.get('preserve'));
 
-		if(schemaMap.has('preserve'))
-			result.preserve(schemaMap.get('preserve'));
+			if(schemaMap.has('min'))
+				this.min(schemaMap.get('min'));
 
-		if(schemaMap.has('min'))
-			result.min(schemaMap.get('min'));
+			if(schemaMap.has('max'))
+				this.max(schemaMap.get('max'));
 
-		if(schemaMap.has('max'))
-			result.max(schemaMap.get('max'));
+			if(schemaMap.has('schema')) {
+				if(!(schemaMap.get('schema') instanceof Type.Object))
+					throw new SchemaError('Expected schema.schema to be an Object');
 
-		if(schemaMap.has('schema')) {
-			if(!(schemaMap.get('schema') instanceof Type.Object))
-				throw new SchemaError('Expected schema.schema to be an Object');
+				let result = {};
 
-			let res = {};
+				Object.keys(schemaMap.get('schema')).forEach(key => {
+					let schemaType = getSchemaType(schemaMap.get('schema')[key]);
 
-			Object.keys(schemaMap.get('schema')).forEach(key => {
-				let schemaType = getSchemaType(schemaMap.get('schema')[key]);
+					if(this._validatorMap.has(schemaType))
+						result[key] = (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schemaMap.get('schema')[key]);
+					else
+						throw new SchemaError('Validator ' + schemaType + ' not found');
+				});
 
-				if(validatorMap.has(schemaType))
-					res[key] = (validatorMap.get(schemaType).fromJSON(schemaMap.get('schema')[key], validatorMap));
-				else
-					throw new SchemaError('Validator ' + schemaType + ' not found');
-			});
+				this.schema(result);
+			}
 
-			result.schema(res);
+			return this;
 		}
-
-		return result;
+		else if (this._validatorMap.has(schemaType))
+			return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+		else
+			throw new TypeError('Validator ' + schemaType + ' not found');
 	}
 
 	parseSync(data) {

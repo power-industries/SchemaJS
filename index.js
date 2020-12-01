@@ -1,27 +1,32 @@
-const Type = require('@power-industries/typejs');
+// Util Libraries
 const getSchemaType = require('./Util/getSchemaType');
+const checkValidatorMap = require('./Util/checkValidatorMap');
+const Rule = require('./Util/Rule');
 
-const Validator = require('./Util/Validator');
+// Error Libraries
+const SchemaError = require('./Util/Errors/SchemaError');
+const ParseError = require('./Util/Errors/ParseError');
 
+// Validator Base Class
+const Validator = require('./Validators/Validator.base');
+
+// Primitive Validator Classes
 const AnyValidator = require('./Validators/TypeValidators/AnyValidator');
 const BooleanValidator = require('./Validators/TypeValidators/BooleanValidator');
 const NumberValidator = require('./Validators/TypeValidators/NumberValidator');
 const StringValidator = require('./Validators/TypeValidators/StringValidator');
-const ArrayValidator = require('./Validators/TypeValidators/ArrayValidator');
-const ObjectValidator = require('./Validators/TypeValidators/ObjectValidator');
 
+// Container Validator Classes
+const ArrayValidator = require('./Validators/ContainerValidators/ArrayValidator');
+const ObjectValidator = require('./Validators/ContainerValidators/ObjectValidator');
+
+// Logic Validator Classes
 const OrValidator = require('./Validators/LogicalValidators/OrValidator');
 const AndValidator = require('./Validators/LogicalValidators/AndValidator');
 
 class Schema {
-	constructor(schema, customValidatorMap = new Map()) {
-		if(!(customValidatorMap instanceof Map))
-			throw new TypeError('Expected customValidatorMap to be a Map');
-
-		customValidatorMap.forEach((value, key) => {
-			if(!(key instanceof Type.String && value.prototype instanceof Validator))
-				throw new TypeError('Expected customValidatorMap to be a Map of Strings and Validators');
-		});
+	constructor(customValidatorMap = new Map()) {
+		checkValidatorMap(customValidatorMap);
 
 		this._validatorMap = new Map([
 			['any', AnyValidator],
@@ -34,109 +39,82 @@ class Schema {
 			['and', AndValidator],
 			...customValidatorMap
 		]);
-
-		if(schema instanceof Validator)
-			this._schema = schema;
-		else if(schema instanceof Type.Object)
-			this.fromJSON(schema);
-		else
-			throw new TypeError('Expected schema to be a JSON Schema or a Validator');
 	}
 
 	fromJSON(schema) {
-		let schemaType = getSchemaType(schema);
+		const schemaType = getSchemaType(schema);
 
 		if(!this._validatorMap.has(schemaType))
 			throw new TypeError('Validator ' + schemaType + ' not found');
 
-		this._schema = this._validatorMap.get(schemaType).fromJSON(schema, this._validatorMap);
+		return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
 	}
-	toJSON() {
-		return this._schema.toJSON();
-	}
-
-	validate(data) {
-		return new Promise((resolve, reject) => {
-			if(this.validateSync(data))
-				return resolve();
-			else
-				return reject();
-		});
-	}
-	validateSync(data) {
-		try {
-			this.parseSync(data);
-			return true;
-		}
-		catch (e) {
-			return false;
-		}
+	toJSON(schema) {
+		return schema.toJSON();
 	}
 
-	parse(data) {
-		return new Promise((resolve, reject) => {
-			try {
-				return resolve(this.parseSync(data));
-			}
-			catch (e) {
-				return reject(e);
-			}
-		});
+	Any() {
+		return new AnyValidator(this._validatorMap);
 	}
-	parseSync(data) {
-		return this._schema.parseSync(data);
+	Boolean() {
+		return new BooleanValidator(this._validatorMap);
 	}
-
-	static Any() {
-		return new AnyValidator();
+	Number() {
+		return new NumberValidator(this._validatorMap);
 	}
-	static Boolean() {
-		return new BooleanValidator();
+	String() {
+		return new StringValidator(this._validatorMap);
 	}
-	static Number() {
-		return new NumberValidator();
+	Array() {
+		return new ArrayValidator(this._validatorMap);
 	}
-	static String() {
-		return new StringValidator();
-	}
-	static Array() {
-		return new ArrayValidator();
-	}
-	static Object() {
-		return new ObjectValidator();
+	Object() {
+		return new ObjectValidator(this._validatorMap);
 	}
 
-	static Or(validator) {
-		return new OrValidator(validator);
+	Or() {
+		return new OrValidator(this._validatorMap);
 	}
-	static And(validator) {
-		return new AndValidator(validator);
+	And() {
+		return new AndValidator(this._validatorMap);
 	}
 
-	static get AnyValidator() {
+	get AnyValidator() {
 		return AnyValidator;
 	}
-	static get BooleanValidator() {
+	get BooleanValidator() {
 		return BooleanValidator;
 	}
-	static get NumberValidator() {
+	get NumberValidator() {
 		return NumberValidator;
 	}
-	static get StringValidator() {
+	get StringValidator() {
 		return StringValidator;
 	}
-	static get ArrayValidator() {
+	get ArrayValidator() {
 		return ArrayValidator;
 	}
-	static get ObjectValidator() {
+	get ObjectValidator() {
 		return ObjectValidator;
 	}
 
-	static get OrValidator() {
+	get OrValidator() {
 		return OrValidator;
 	}
-	static get AndValidator() {
+	get AndValidator() {
 		return AndValidator;
+	}
+
+	get dev() {
+		return {
+			Validator: Validator,
+			Error: {
+				ParseError, SchemaError
+			},
+			Util: {
+				Rule, getSchemaType, checkValidatorMap
+			}
+		};
 	}
 }
 

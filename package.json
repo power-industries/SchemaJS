@@ -1,6 +1,6 @@
 {
   "name": "@power-industries/schemajs",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0-beta.1",
   "description": "Modern Schema Validation by Method Chaining",
   "main": "index.js",
   "scripts": {},

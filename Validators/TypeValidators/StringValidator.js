@@ -1,14 +1,24 @@
-const Validator = require('../../Util/Validator');
-const Rule = require('../../Util/Rule');
+// Global Libraries
 const Type = require('@power-industries/typejs');
-const getSchemaType = require('../../Util/getSchemaType');
 
-const SchemaError = require('../../Util/SchemaError');
-const ParseError = require('../../Util/ParseError');
+// Util Libraries
+const getSchemaType = require('../../Util/getSchemaType');
+const checkValidatorMap = require('../../Util/checkValidatorMap');
+const Rule = require('../../Util/Rule');
+
+// Error Libraries
+const SchemaError = require('../../Util/Errors/SchemaError');
+const ParseError = require('../../Util/Errors/ParseError');
+
+// Validator Base Class
+const Validator = require('../Validator.base');
 
 class StringValidator extends Validator {
-	constructor() {
+	constructor(validatorMap) {
 		super();
+
+		checkValidatorMap(validatorMap);
+		this._validatorMap = validatorMap;
 
 		this._required = new Rule();
 		this._default = new Rule();
@@ -132,46 +142,51 @@ class StringValidator extends Validator {
 
 		return result;
 	}
-	static fromJSON(schema) {
-		let result = new StringValidator();
+	fromJSON(schema) {
+		let schemaType = getSchemaType(schema);
 
-		if (getSchemaType(schema) !== 'string')
-			throw new SchemaError('Expected schema.type to be "string"');
+		if(schemaType === 'string') {
+			let schemaMap = new Map(Object.entries(schema));
 
-		let schemaMap = new Map(Object.entries(schema));
+			if(schemaMap.has('required'))
+				this.required(schemaMap.get('required'));
 
-		if(schemaMap.has('required'))
-			result.required(schemaMap.get('required'));
+			if(schemaMap.has('default'))
+				this.default(schemaMap.get('default'));
 
-		if(schemaMap.has('default'))
-			result.default(schemaMap.get('default'));
+			if(schemaMap.has('uppercase'))
+				this.uppercase(schemaMap.get('uppercase'));
 
-		if(schemaMap.has('uppercase'))
-			result.uppercase(schemaMap.get('uppercase'));
+			if(schemaMap.has('lowercase'))
+				this.lowercase(schemaMap.get('lowercase'));
 
-		if(schemaMap.has('lowercase'))
-			result.lowercase(schemaMap.get('lowercase'));
+			if(schemaMap.has('min'))
+				this.min(schemaMap.get('min'));
 
-		if(schemaMap.has('min'))
-			result.min(schemaMap.get('min'));
+			if(schemaMap.has('max'))
+				this.max(schemaMap.get('max'));
 
-		if(schemaMap.has('max'))
-			result.max(schemaMap.get('max'));
+			if(schemaMap.has('contains'))
+				this.contains(schemaMap.get('contains'));
 
-		if(schemaMap.has('contains'))
-			result.contains(schemaMap.get('contains'));
+			if(schemaMap.has('matches')) {
+				if(!(schemaMap.get('matches') instanceof Type.String))
+					throw new SchemaError('Expected schema.matches to be a String');
 
-		if(schemaMap.has('matches')) {
-			if(!(schemaMap.get('matches') instanceof Type.String))
-				throw new SchemaError('Expected schema.matches to be a String');
+				let result = new RegExp(/\/(.*)\/(.*)/).exec(schemaMap.get('matches'));
 
-			result.matches(new RegExp((/\/(.*)\/(.*)/.exec(schemaMap.get('matches')))[1], (/\/(.*)\/(.*)/.exec(schemaMap.get('matches')))[2]));
+				this.matches(result[1], result[2]);
+			}
+
+			if(schemaMap.has('equals'))
+				this.equals(schemaMap.get('equals'));
+
+			return this;
 		}
-
-		if(schemaMap.has('equals'))
-			result.equals(schemaMap.get('equals'));
-
-		return result;
+		else if (this._validatorMap.has(schemaType))
+			return (new this._validatorMap.get(schemaType)(this._validatorMap)).fromJSON(schema);
+		else
+			throw new TypeError('Validator ' + schemaType + ' not found');
 	}
 
 	parseSync(data) {
